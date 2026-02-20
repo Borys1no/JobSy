@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_controller.dart';
+import 'phone_verification_page.dart';
 
 class RegisterPage extends ConsumerWidget {
-  const RegisterPage({super.key});
+  final String role;
+  const RegisterPage({super.key, required this.role});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,10 +34,28 @@ class RegisterPage extends ConsumerWidget {
               onPressed: loading
                   ? null
                   : () async {
-                      await ref
-                          .read(authControllerProvider.notifier)
-                          .register(emailCtrl.text, passCtrl.text);
-                      Navigator.pop(context);
+                      try {
+                        await ref
+                            .read(authControllerProvider.notifier)
+                            .register(emailCtrl.text, passCtrl.text);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Registro exitoso")),
+                          );
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const PhoneVerificationPage(),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text("Error: $e")));
+                        }
+                      }
                     },
               child: loading
                   ? const CircularProgressIndicator()

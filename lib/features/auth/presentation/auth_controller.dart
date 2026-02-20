@@ -18,6 +18,7 @@ class AuthController extends StateNotifier<bool> {
     }
   }
 
+  //Cambiar
   Future<void> register(String email, String password) async {
     state = true;
     try {
