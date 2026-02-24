@@ -10,19 +10,24 @@ class AuthController extends StateNotifier<bool> {
   Future<void> login(String email, String password) async {
     state = true;
     try {
-      await _repository.login(email: email, password: password);
-    } catch (e) {
-      rethrow;
+      final response = await _repository.login(
+        email: email,
+        password: password,
+      );
+      final user = response.user;
+      if (user != null && user.emailConfirmedAt == null) {
+        throw Exception("Debes confirmar tu correo antes de ingresar.");
+      }
     } finally {
       state = false;
     }
   }
 
   //Cambiar
-  Future<void> register(String email, String password) async {
+  Future<void> register(String email, String password, String role) async {
     state = true;
     try {
-      await _repository.register(email: email, password: password);
+      await _repository.register(email: email, password: password, role: role);
     } finally {
       state = false;
     }

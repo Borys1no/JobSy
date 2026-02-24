@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_controller.dart';
-import 'phone_verification_page.dart';
 
 class RegisterPage extends ConsumerWidget {
   final String role;
@@ -37,24 +36,26 @@ class RegisterPage extends ConsumerWidget {
                       try {
                         await ref
                             .read(authControllerProvider.notifier)
-                            .register(emailCtrl.text, passCtrl.text);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Registro exitoso")),
-                          );
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const PhoneVerificationPage(),
+                            .register(
+                              emailCtrl.text.trim(),
+                              passCtrl.text.trim(),
+                              role,
+                            );
+
+                        if (!context.mounted) return;
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Revisa tu correo para confirmar tu cuenta.",
                             ),
-                          );
-                        }
+                          ),
+                        );
+                        Navigator.pushReplacementNamed(context, '/login');
                       } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(
-                            context,
-                          ).showSnackBar(SnackBar(content: Text("Error: $e")));
-                        }
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text("Error: $e")));
                       }
                     },
               child: loading
