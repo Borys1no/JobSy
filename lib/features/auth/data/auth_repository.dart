@@ -20,23 +20,26 @@ class AuthRepository {
     final response = await _client.auth.signUp(
       email: email,
       password: password,
+      data: {'role': role},
     );
 
-    final user = response.user;
-
-    if (user == null) {
-      throw Exception("No se pudo crear el usuario");
-    }
-    await _client.from('profiles').insert({
-      'id': user.id,
-      'role': role,
-      'phone': 'null',
-      'phone_verified': false,
-    });
     return response;
   }
 
   Future<void> logout() async {
     await _client.auth.signOut();
+  }
+
+  Future<Map<String, dynamic>?> getProfile(String userId) async {
+    final response = await _client
+        .from('profiles')
+        .select()
+        .eq('id', userId)
+        .maybeSingle();
+    return response;
+  }
+
+  Future<void> createProfile({required String id, required String role}) async {
+    await _client.from('profiles').insert({'id': id, 'role': role});
   }
 }

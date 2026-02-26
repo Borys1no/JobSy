@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jobsy/features/auth/presentation/login_page.dart';
 import 'auth_controller.dart';
 
 class RegisterPage extends ConsumerWidget {
@@ -37,9 +38,9 @@ class RegisterPage extends ConsumerWidget {
                         await ref
                             .read(authControllerProvider.notifier)
                             .register(
-                              emailCtrl.text.trim(),
-                              passCtrl.text.trim(),
-                              role,
+                              email: emailCtrl.text.trim(),
+                              password: passCtrl.text.trim(),
+                              role: role,
                             );
 
                         if (!context.mounted) return;
@@ -51,7 +52,12 @@ class RegisterPage extends ConsumerWidget {
                             ),
                           ),
                         );
-                        Navigator.pushReplacementNamed(context, '/login');
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => LoginPage(role: role),
+                          ),
+                        );
                       } catch (e) {
                         ScaffoldMessenger.of(
                           context,

@@ -15,19 +15,45 @@ class AuthController extends StateNotifier<bool> {
         password: password,
       );
       final user = response.user;
-      if (user != null && user.emailConfirmedAt == null) {
+      if (user == null) {
+        throw Exception("Error en login");
+      }
+      if (user.emailConfirmedAt == null) {
         throw Exception("Debes confirmar tu correo antes de ingresar.");
+      }
+
+      //Obtener el role desde metadata
+      final role = user.userMetadata?['role'];
+      if (role == null) {
+        throw Exception("No se encontro el rol del usuario.");
+      }
+
+      final profile = await _repository.getProfile(user.id);
+      if (profile == null) {
+        await _repository.createProfile(id: user.id, role: role);
       }
     } finally {
       state = false;
     }
   }
 
-  //Cambiar
-  Future<void> register(String email, String password, String role) async {
+  Future<void> register({
+    required String email,
+    required String password,
+    required String role,
+  }) async {
     state = true;
+
     try {
-      await _repository.register(email: email, password: password, role: role);
+      final response = await _repository.register(
+        email: email,
+        password: password,
+        role: role,
+      );
+      final user = response.user;
+      if (user == null) {
+        throw Exception("No se pudo registrar el usuario.");
+      }
     } finally {
       state = false;
     }
