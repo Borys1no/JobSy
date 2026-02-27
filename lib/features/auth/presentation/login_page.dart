@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jobsy/features/worker/presentation/pages/worker_onboarding_page.dart';
+import 'package:jobsy/features/worker/presentation/pages/worker_home_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'auth_controller.dart';
 import 'register_page.dart';
 
@@ -37,17 +40,33 @@ class LoginPage extends ConsumerWidget {
                         await ref
                             .read(authControllerProvider.notifier)
                             .login(emailCtrl.text, passCtrl.text);
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Login exitoso')),
-                          );
+                        if (!context.mounted) return;
+                        final prefs = await SharedPreferences.getInstance();
+                        final hasSeen =
+                            prefs.getBool("HasSeenWorkerOnboarding") ?? false;
+
+                        if (role == "worker") {
+                          if (!hasSeen) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const WorkerOnboardingPage(),
+                              ),
+                            );
+                          } else {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const WorkerHomePage(),
+                              ),
+                            );
+                          }
                         }
                       } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(
-                            context,
-                          ).showSnackBar(SnackBar(content: Text('Error: $e')));
-                        }
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text('Error: $e')));
                       }
                     },
               child: loading

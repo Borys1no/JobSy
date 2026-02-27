@@ -32,6 +32,7 @@ class AuthController extends StateNotifier<bool> {
       if (profile == null) {
         await _repository.createProfile(id: user.id, role: role);
       }
+      return role;
     } finally {
       state = false;
     }
