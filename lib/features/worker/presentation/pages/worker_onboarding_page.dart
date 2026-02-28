@@ -18,19 +18,25 @@ class _WorkerOnboardingPageState extends State<WorkerOnboardingPage> {
       "title": "Tu talento merece más clientes",
       "subtitle":
           "Haz visible tu experiencia, destaca tus habilidades y conecta con personas que realmente valoran tu trabajo.",
-      "image": "assets/worker1.png",
+      "image": "assets/images/worker/worker.png",
     },
     {
       "title": "Construye tu reputación y consigue más clientes",
       "subtitle":
           "Cada servicio completado suma confianza y mejores calificaciones, ayudándote a atraer nuevas oportunidades.",
-      "image": "assets/worker2.png",
+      "image": "assets/images/worker/worker_confiable.png",
     },
     {
       "title": "Recibe pagos seguros dentro de la app",
       "subtitle":
           "Gestiona tus cobros de forma protegida, con respaldo y registro claro de cada trabajo realizado.",
-      "image": "assets/worker3.png",
+      "image": "assets/images/worker/worker_pay.png",
+    },
+    {
+      "title": "Chatea y acuerda el servicio",
+      "subtitle":
+          "Habla directamente con el cliente, define los detalles y formaliza el trabajo con total claridad.",
+      "image": "assets/images/worker/worker_chat.png",
     },
   ];
   void nextPage() {

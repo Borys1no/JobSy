@@ -11,7 +11,7 @@ class CompleteProfilePage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset("assets/complete_profile.png"),
+            Image.asset("assets/images/worker/worker_alert.png"),
             const SizedBox(height: 30),
             const Text(
               "¡Completa tu perfil!",
