@@ -112,6 +112,24 @@ class _WorkerOnboardingPageState extends State<WorkerOnboardingPage> {
             ),
           ),
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              pages.length,
+              (index) => AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                width: currentIndex == index ? 20 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: currentIndex == index
+                      ? Colors.blue
+                      : Colors.grey.shade400,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
+          ),
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               TextButton(onPressed: previousPage, child: const Text("Atras")),
