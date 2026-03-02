@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:jobsy/core/widgets/blob_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jobsy/features/worker/presentation/pages/complete_profile_page.dart';
+import 'package:jobsy/core/constants/app_constants.dart';
+import 'package:jobsy/core/widgets/top_background_layout.dart';
+import 'package:jobsy/core/widgets/blob_image.dart';
 
 class WorkerOnboardingPage extends StatefulWidget {
   const WorkerOnboardingPage({super.key});
@@ -72,8 +76,9 @@ class _WorkerOnboardingPageState extends State<WorkerOnboardingPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
+    return TopBackgroundLayout(
+      title: AppConstants.appName,
+      child: Column(
         children: [
           Expanded(
             child: PageView.builder(
@@ -90,7 +95,11 @@ class _WorkerOnboardingPageState extends State<WorkerOnboardingPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Image.asset(pages[index]["image"]!),
+                      BlobImage(
+                        imagePath: pages[index]["image"]!,
+                        variant: index,
+                      ),
+
                       const SizedBox(height: 30),
                       Text(
                         pages[index]["title"]!,
