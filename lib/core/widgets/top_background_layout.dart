@@ -30,10 +30,7 @@ class TopBackgroundLayout extends StatelessWidget {
             child: Center(
               child: Text(
                 title,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(context).textTheme.headlineLarge,
               ),
             ),
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jobsy/core/widgets/blob_image.dart';
 
 class CompleteProfilePage extends StatelessWidget {
   const CompleteProfilePage({super.key});
@@ -11,7 +12,12 @@ class CompleteProfilePage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset("assets/images/worker/worker_alert.png"),
+            BlobImage(
+              imagePath: "assets/images/worker/worker_alert.png",
+              height: 300,
+              variant: 1,
+            ),
+
             const SizedBox(height: 30),
             const Text(
               "¡Completa tu perfil!",
