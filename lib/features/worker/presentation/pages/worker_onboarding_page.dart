@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jobsy/features/worker/presentation/pages/complete_profile_page.dart';
 import 'package:jobsy/core/constants/app_constants.dart';
 import 'package:jobsy/core/widgets/top_background_layout.dart';
-import 'package:jobsy/core/widgets/blob_image.dart';
 
 class WorkerOnboardingPage extends StatefulWidget {
   const WorkerOnboardingPage({super.key});

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jobsy/core/widgets/blob_image.dart';
+import 'package:jobsy/features/worker/presentation/pages/step1_form.dart';
 
 class CompleteProfilePage extends StatelessWidget {
   const CompleteProfilePage({super.key});
@@ -32,7 +33,10 @@ class CompleteProfilePage extends StatelessWidget {
             const SizedBox(height: 30),
             ElevatedButton(
               onPressed: () {
-                // aquí luego irás a editar perfil
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const Step1Form()),
+                );
               },
               child: const Text("Continuar"),
             ),

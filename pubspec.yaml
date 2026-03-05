@@ -33,9 +33,19 @@ dependencies:
   #Supabase
   supabase_flutter: ^2.5.6
 
+  #Riverpod
+  riverpod_annotation: ^2.3.0
+  hooks_riverpod: ^2.4.0
+  flutter_riverpod: ^2.4.0
+
+  #Utilidades
+  image_picker: ^1.0.4
+  path_provider: ^2.1.0
+  path: ^1.9.0
+
   #State management
 
-  flutter_riverpod: ^2.5.1
+  
 
   #Routing
   go_router: ^14.2.0
@@ -54,7 +64,10 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  build_runner: ^2.4.9
+
+  #RIVERPOD GENERATOR
+  riverpod_generator: ^2.3.0
+  build_runner: ^2.4.6
   freezed: ^2.5.2
   json_serializable: ^6.8.0
   
