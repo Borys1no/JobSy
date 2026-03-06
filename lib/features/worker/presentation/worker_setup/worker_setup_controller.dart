@@ -13,8 +13,10 @@ class WorkerSetupController extends _$WorkerSetupController {
 
   @override
   WorkerSetupState build() {
-    _picker = ImagePicker();
-    return const WorkerSetupState();
+    //Cargar datos iniciales si venimos del paso 1
+
+    final previousState = ref.watch(workerSetupStateProvider);
+    return previousState ?? const WorkerSetupState();
   }
 
   SupabaseClient get _supabase => ref.read(supabaseClientProvider);
@@ -99,6 +101,135 @@ class WorkerSetupController extends _$WorkerSetupController {
     }
   }
 
+  //control de chip expandibles
+
+  void setExpadingChip(String? chipId) {
+    state = state.copyWith(expandingChipId: chipId);
+  }
+
+  //Agregar servicio popular con precio
+  void addPopularService({
+    required int serviceId,
+    required String serviceName,
+    required double price,
+  }) {
+    final newService = AdditionalService(
+      serviceId: serviceId,
+      name: serviceName,
+      basePrice: price,
+      isCustom: false,
+    );
+    final updatedServices = List<AdditionalService>.from(
+      state.additionalServices,
+    )..add(newService);
+    state = state.copyWith(
+      additionalServices: updatedServices,
+      expandingChipId: null,
+    );
+  }
+
+  //Eliminar servicio adicional
+  void removeAdditionalService(int index) {
+    final updatedServices = List<AdditionalService>.from(
+      state.additionalServices,
+    )..removeAt(index);
+    state = state.copyWith(additionalServices: updatedServices);
+  }
+
+  //control del formulario de servicio personalizado
+  void toggleCustomForm() {
+    state = state.copyWith(
+      showCustomForm: !state.showCustomForm,
+      customServiceName: '',
+      customServicePrice: '',
+      expandingChipId: null,
+    );
+  }
+
+  void updateCustomServiceName(String value) {
+    state = state.copyWith(customServiceName: value);
+  }
+
+  void updateCustomServicePrice(String value) {
+    //Permitir solo numeros y un punto decimal
+    final filtered = value.replaceAll(RegExp(r'[^\d.]'), '');
+    //Evitar multiples puntos decimales
+    if (filtered.split('.').length > 2) return;
+    state = state.copyWith(customServicePrice: filtered);
+  }
+
+  //Agregar servicio personalizado
+  Future<void> addCustomService() async {
+    if (state.customServiceName == null || state.customServiceName!.isEmpty) {
+      state = state.copyWith(errorMessage: 'Ingresa el nombre del servicio');
+      return;
+    }
+
+    final price = double.tryParse(state.customServicePrice ?? '');
+    if (price == null || price <= 0) {
+      state = state.copyWith(errorMessage: 'Ingresa un precio válido');
+      return;
+    }
+
+    //Por ahora solo se guarda en estado local
+    final newService = AdditionalService(
+      serviceId: null,
+      name: state.customServiceName!,
+      basePrice: price,
+      isCustom: true,
+    );
+
+    final updateServices = List<AdditionalService>.from(
+      state.additionalServices,
+    )..add(newService);
+
+    state = state.copyWith(
+      additionalServices: updateServices,
+      showCustomForm: false,
+      customServiceName: '',
+      customServicePrice: '',
+      errorMessage: null,
+    );
+  }
+
+  //Descripcion breve
+  void updateDescription(String value) {
+    if (value.length <= 500) {
+      state = state.copyWith(description: value);
+    }
+  }
+
+  //Fotos de trabajos
+  Future<void> pickWorkPhoto(int index) async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+      if (image != null) {
+        final updatePhotos = List<String?>.from(state.workPhotos);
+        updatePhotos[index] = image.path;
+        state = state.copyWith(workPhotos: updatePhotos);
+      }
+    } catch (e) {
+      state = state.copyWith(errorMessage: 'Error al seleccionar imagen');
+    }
+  }
+
+  //Validar antes de continuar
+  String? validateStep2() {
+    if (state.description.isEmpty) {
+      return 'Agrega una descripción breve de tu experiencia';
+    }
+    if (state.workPhotos.any((photo) => photo == null)) {
+      return 'Debes subir las 3 fotos de trabajos realizados';
+    }
+
+    return null;
+  }
+
   // Avanzar al siguiente paso (validamos antes)
   Future<bool> goToNextStep() async {
     if (state.currentStep == 0) {
@@ -120,5 +251,15 @@ class WorkerSetupController extends _$WorkerSetupController {
       errorMessage: null,
     );
     return true;
+  }
+
+  //Volver al paso anterior
+  void goToPreviousStep() {
+    if (state.currentStep > 0) {
+      state = state.copyWith(
+        currentStep: state.currentStep - 1,
+        errorMessage: null,
+      );
+    }
   }
 }
