@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/config/supabase_client.dart';
 import '../../domain/worker_setup_state.dart';
+import 'package:riverpod/riverpod.dart';
 
 part 'worker_setup_controller.g.dart';
 
@@ -14,9 +15,8 @@ class WorkerSetupController extends _$WorkerSetupController {
   @override
   WorkerSetupState build() {
     //Cargar datos iniciales si venimos del paso 1
-
-    final previousState = ref.watch(workerSetupStateProvider);
-    return previousState ?? const WorkerSetupState();
+    _picker = ImagePicker();
+    return const WorkerSetupState();
   }
 
   SupabaseClient get _supabase => ref.read(supabaseClientProvider);

@@ -13,7 +13,7 @@ class Step1Form extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.read(workerSetupControllerProvider.notifier);
     final state = ref.watch(workerSetupControllerProvider);
-    final servicesAsync = ref.watch(servicesListProvider);
+    final servicesAsync = ref.watch(allServicesProvider);
 
     return TopBackgroundLayout(
       title: 'Completar perfil',
@@ -115,7 +115,7 @@ class Step1Form extends ConsumerWidget {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.work),
                 ),
-                value: state.selectedServiceId,
+                initialValue: state.selectedServiceId,
                 items: services.map((service) {
                   return DropdownMenuItem<int>(
                     value: service['id'] as int,
