@@ -83,6 +83,10 @@ class WorkerSetupController extends _$WorkerSetupController {
     state = state.copyWith(selectedServiceId: serviceId);
   }
 
+  void updateService({int? id, String? name}) {
+    state = state.copyWith(selectedServiceId: id, primaryServiceName: name);
+  }
+
   // Seleccionar imagen de la galería
   Future<void> pickImage() async {
     try {

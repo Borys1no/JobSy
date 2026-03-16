@@ -34,10 +34,7 @@ class TopBackgroundLayout extends StatelessWidget {
               ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.only(top: screenHeight * (heightFactor - 0.05)),
-            child: child,
-          ),
+          Padding(padding: const EdgeInsets.only(top: 100), child: child),
         ],
       ),
     );

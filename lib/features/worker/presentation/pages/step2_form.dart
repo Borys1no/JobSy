@@ -15,6 +15,7 @@ class Step2Form extends ConsumerWidget {
     final popularServicesAsync = ref.watch(popularServicesProvider);
 
     return TopBackgroundLayout(
+      title: 'Configuración del trabajador',
       child: GestureDetector(
         onTap: () {
           controller.setExpadingChip(null);
@@ -32,6 +33,7 @@ class Step2Form extends ConsumerWidget {
               'Paso 2 de 3',
               style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
+            centerTitle: true,
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
@@ -133,7 +135,7 @@ class Step2Form extends ConsumerWidget {
                                         // Chip
                                         GestureDetector(
                                           onTap: () =>
-                                              controller.setExpandingChip(
+                                              controller.setExpadingChip(
                                                 isExpanding
                                                     ? null
                                                     : serviceId.toString(),
@@ -236,7 +238,7 @@ class Step2Form extends ConsumerWidget {
                                                     TextButton(
                                                       onPressed: () =>
                                                           controller
-                                                              .setExpandingChip(
+                                                              .setExpadingChip(
                                                                 null,
                                                               ),
                                                       child: const Text(
@@ -271,7 +273,7 @@ class Step2Form extends ConsumerWidget {
                                         ],
                                       ],
                                     );
-                                  }).toList(),
+                                  }),
 
                                   if (hasMore)
                                     GestureDetector(

@@ -25,7 +25,7 @@ final popularServicesProvider =
 // ignore: unused_element
 typedef PopularServicesRef =
     AutoDisposeFutureProviderRef<List<Map<String, dynamic>>>;
-String _$allServicesHash() => r'ddcc6e655afdab44a23c09bd8f2a98665ab569c8';
+String _$allServicesHash() => r'053d15bb4d8207227d6e511c1fa76f896f658514';
 
 /// See also [allServices].
 @ProviderFor(allServices)
