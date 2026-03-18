@@ -266,4 +266,200 @@ class WorkerSetupController extends _$WorkerSetupController {
       );
     }
   }
+
+  void updateSector(String value) {
+    state = state.copyWith(sector: value);
+  }
+
+  void updateAddress(String value) {
+    state = state.copyWith(address: value);
+  }
+
+  void toggleDay(String day) {
+    switch (day) {
+      case 'Lunes':
+        state = state.copyWith(availableMonday: !state.availableMonday);
+        break;
+      case 'Martes':
+        state = state.copyWith(availableTuesday: !state.availableTuesday);
+        break;
+      case 'Miércoles':
+        state = state.copyWith(availableWednesday: !state.availableWednesday);
+        break;
+      case 'Jueves':
+        state = state.copyWith(availableThursday: !state.availableThursday);
+        break;
+      case 'Viernes':
+        state = state.copyWith(availableFriday: !state.availableFriday);
+        break;
+      case 'Sábado':
+        state = state.copyWith(availableSaturday: !state.availableSaturday);
+        break;
+      case 'Domingo':
+        state = state.copyWith(availableSunday: !state.availableSunday);
+        break;
+    }
+  }
+
+  void toggleEmergency() {
+    state = state.copyWith(availableEmergency: !state.availableEmergency);
+  }
+
+  Future<void> getCurrentLocation() async {
+    state = state.copyWith(isGettinLocation: true, errorMessage: null);
+
+    try {
+      await Future.delayed(const Duration(seconds: 1));
+
+      state = state.copyWith(
+        latitude: -2.170998,
+        longitude: -79.922359,
+        sector: 'Urdesa',
+        address: 'Av. Principal y Calle Secundaria',
+        isGettinLocation: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isGettinLocation: false,
+        errorMessage: 'No se pudo obtener la ubicación',
+      );
+    }
+  }
+
+  String? validateStep3() {
+    if (state.sector.isEmpty) {
+      return 'Selecciona o ingresa tu sector';
+    }
+    if (state.address.isEmpty) {
+      return 'Ingresa tu dirección';
+    }
+    if (state.availableDays.isEmpty) {
+      return 'Selecciona al menos un día de disponibilidad';
+    }
+    return null;
+  }
+
+  //Guardar todo en Supabase (al finalizar)
+  Future<bool> saveWorkerProfile() async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) throw Exception('Usuario no autenticado');
+
+      //Subir avatar a Storage si existe
+      String? avatarUrl;
+      if (state.avatarPath != null) {
+        final avatarFile = File(state.avatarPath!);
+        final avatarExt = avatarPath!.split('.').last;
+        final avatarPath = 'avatars/$userId.avatarExt';
+
+        await _supabase.storage
+            .from('profiles')
+            .upload(
+              avatarPath,
+              avatarFile,
+              fileOptions: const FileOptions(upsert: true),
+            );
+        avatarUrl = _supabase.storage.from('profiles').getPublicUrl(avatarPath);
+      }
+
+      //2. Subir fotos de trabajos a storage
+      final workPhotoUrls = <String>[];
+      for (var i = 0; i < state.workPhotos.length; i++) {
+        final photoPath = state.workPhotos[i];
+        if (photoPath != null) {
+          final photoFile = File(photoPath);
+          final photoExt = photoPath.split('.').last;
+          final storagePath = 'work_photos/$userId/${i}_$photoExt';
+
+          await _supabase.storage
+              .from('work_photos')
+              .upload(
+                storagePath,
+                photoFile,
+                fileOptions: const FileOptions(upsert: true),
+              );
+          final publicUrl = _supabase.storage
+              .from('work_photos')
+              .getPublicUrl(storagePath);
+          workPhotoUrls.add(publicUrl);
+        }
+      }
+      //3 Insertar/Actualizar en profiles
+      await _supabase.from('profiles').upsert({
+        'id': userId,
+        'first_name': state.firstName,
+        'last_name': state.lastName,
+        'phone': '',
+        'role': 'worker',
+        'avatar_url': avatarUrl,
+      });
+
+      //4 Insertar en user_identity
+
+      await _supabase.from('user_identity').upsert({
+        'user_id': userId,
+        'national_id': state.nationalId,
+        'verified': false,
+      });
+
+      //5 Insertar en worker_profiles
+      await _supabase.from('worker_profiles').upsert({
+        'user_id': userId,
+        'bio': state.description,
+        'zone': state.sector,
+        'address': state.address,
+        'latitude': state.latitude,
+        'longitude': state.longitude,
+        'available_days': state.availableDays,
+        'available_emergency': state.availableEmergency,
+      });
+
+      //6 Insertar servicios (principal + adicionales)
+      //Servicio principal
+
+      if (state.primaryServiceId != null) {
+        await _supabase.from('worker_services').upsert({
+          'worker_id': userId,
+          'service_id': state.primaryServiceId,
+          'service_type': 'primary',
+          'base_price': null,
+        });
+      }
+      //Servicios adicionales
+
+      for (final service in state.additionalServices) {
+        if (service.serviceId != null) {
+          //Servicios existente
+          await _supabase.from('worker_services').insert({
+            'worker_id': userId,
+            'service_id': service.serviceId,
+            'service_type': 'secondary',
+            'base_price': service.basePrice,
+          });
+        } else {
+          //Servicios personalizados - primero crear en services
+          final newService = await _supabase
+              .from('services')
+              .insert({'name': service.name})
+              .select('id')
+              .single();
+          await _supabase.from('worker_services').insert({
+            'worker_id': userId,
+            'service_id': newService['id'],
+            'service_type': 'secondary',
+            'base_price': service.basePrice,
+          });
+        }
+      }
+      state = state.copyWith(isLoading: false);
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Error al guardar: $e',
+      );
+      return false;
+    }
+  }
 }
