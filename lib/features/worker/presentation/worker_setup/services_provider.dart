@@ -1,28 +1,38 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/config/supabase_client.dart';
+import '../../domain/service_model.dart';
 import 'package:riverpod/riverpod.dart';
 
 part 'services_provider.g.dart';
 
 @riverpod
-Future<List<Map<String, dynamic>>> popularServices(Ref ref) async {
+Future<List<ServiceModel>> popularServices(PopularServicesRef ref) async {
   final supabase = ref.read(supabaseClientProvider);
-  final response = await supabase
-      .from('services')
-      .select('id, name')
-      .eq('is_popular', true)
-      .order('name');
-
-  return response;
+  try {
+    final response = await supabase
+        .from('services')
+        .select('id, name')
+        .eq('is_popular', true)
+        .order('name');
+    return (response as List).map((e) => ServiceModel.fromMap(e)).toList();
+  } catch (e) {
+    throw Exception('Error cargando servicios populares: $e');
+  }
 }
 
 @riverpod
-Future<List<Map<String, dynamic>>> allServices(Ref ref) async {
+Future<List<ServiceModel>> allServices(AllServicesRef ref) async {
+  ref.keepAlive();
   final supabase = ref.read(supabaseClientProvider);
-  final response = await supabase
-      .from('services')
-      .select('id , name')
-      .order('name');
 
-  return response;
+  try {
+    final response = await supabase
+        .from('services')
+        .select('id, name')
+        .order('name');
+
+    return (response as List).map((e) => ServiceModel.fromMap(e)).toList();
+  } catch (e) {
+    throw Exception('Error cargando servicios: $e');
+  }
 }

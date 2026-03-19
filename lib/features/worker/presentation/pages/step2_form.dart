@@ -121,9 +121,8 @@ class Step2Form extends ConsumerWidget {
                                 runSpacing: 8,
                                 children: [
                                   ...visibleServices.map((service) {
-                                    final serviceId = service['id'] as int;
-                                    final serviceName =
-                                        service['name'] as String;
+                                    final serviceId = service.id;
+                                    final serviceName = service.name;
                                     final isExpanding =
                                         state.expandingChipId ==
                                         serviceId.toString();

@@ -15,6 +15,12 @@ class Step1Form extends ConsumerWidget {
     final controller = ref.read(workerSetupControllerProvider.notifier);
     final state = ref.watch(workerSetupControllerProvider);
     final servicesAsync = ref.watch(allServicesProvider);
+    final error = state.errorMessage;
+    final isFormValid =
+        state.firstName.isNotEmpty &&
+        state.lastName.isNotEmpty &&
+        state.nationalId.length == 10 &&
+        state.selectedServiceId != null;
 
     return TopBackgroundLayout(
       title: 'Completar perfil',
@@ -92,6 +98,7 @@ class Step1Form extends ConsumerWidget {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.person),
                 ),
+                controller: TextEditingController(text: state.firstName),
                 onChanged: controller.updateFirstName,
               ),
               const SizedBox(height: 16),
@@ -101,6 +108,7 @@ class Step1Form extends ConsumerWidget {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.person_outline),
                 ),
+                controller: TextEditingController(text: state.lastName),
                 onChanged: controller.updateLastName,
               ),
               const SizedBox(height: 16),
@@ -114,6 +122,7 @@ class Step1Form extends ConsumerWidget {
                 ),
                 keyboardType: TextInputType.number,
                 maxLength: 10,
+                controller: TextEditingController(text: state.nationalId),
                 onChanged: controller.updateNationalId,
               ),
               const SizedBox(height: 16),
@@ -126,20 +135,27 @@ class Step1Form extends ConsumerWidget {
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.work),
                   ),
-                  initialValue: state.selectedServiceId,
+                  initialValue:
+                      services.any((s) => s.id == state.selectedServiceId)
+                      ? state.selectedServiceId
+                      : null,
                   items: services.map((service) {
                     return DropdownMenuItem<int>(
-                      value: service['id'] as int,
-                      child: Text(service['name'] as String),
+                      value: service.id,
+                      child: Text(service.name),
                     );
                   }).toList(),
                   onChanged: (id) {
-                    final selected = services.firstWhere((s) => s['id'] == id);
+                    final selected = services.where((s) => s.id == id);
 
-                    controller.updateService(
-                      id: id,
-                      name: selected['name'] as String,
-                    );
+                    if (selected.isNotEmpty) {
+                      final service = selected.first;
+
+                      controller.updateService(
+                        id: service.id,
+                        name: service.name,
+                      );
+                    }
                   },
                 ),
                 loading: () => const Center(child: CircularProgressIndicator()),
@@ -152,13 +168,13 @@ class Step1Form extends ConsumerWidget {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: state.isLoading
+                  onPressed: state.isLoading || !isFormValid
                       ? null
                       : () async {
                           final success = await controller.goToNextStep();
                           if (!context.mounted) return;
                           if (success) {
-                            Navigator.push(
+                            Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => const Step2Form(),
@@ -167,7 +183,7 @@ class Step1Form extends ConsumerWidget {
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(state.errorMessage ?? 'Error'),
+                                content: Text(error ?? 'Error'),
                                 backgroundColor: Colors.red,
                               ),
                             );

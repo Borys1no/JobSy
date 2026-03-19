@@ -27,14 +27,13 @@ class WorkerSetupController extends _$WorkerSetupController {
   bool _validateEcuadorianId(String id) {
     if (id.length != 10) return false;
 
+    if (!RegExp(r'^\d{10}$').hasMatch(id)) return false;
+
     // Los dos primeros dígitos son la provincia (01-24)
-    int province = int.parse(id.substring(0, 2));
-    if (province < 1 || province > 24) return false;
-
-    // El tercer dígito es menor a 6
-    int thirdDigit = int.parse(id[2]);
-    if (thirdDigit > 5) return false;
-
+    final province = int.tryParse(id.substring(0, 2));
+    if (province == null || province < 1 || province > 24) return false;
+    final thirdDigit = int.tryParse(id[2]);
+    if (thirdDigit == null || thirdDigit > 5) return false;
     // Algoritmo módulo 10
     int total = 0;
     for (int i = 0; i < 9; i++) {
@@ -68,23 +67,23 @@ class WorkerSetupController extends _$WorkerSetupController {
 
   // Actualizar campos
   void updateFirstName(String value) {
-    state = state.copyWith(firstName: value);
+    state = state.copyWith(firstName: value, errorMessage: null);
   }
 
   void updateLastName(String value) {
-    state = state.copyWith(lastName: value);
+    state = state.copyWith(lastName: value, errorMessage: null);
   }
 
   void updateNationalId(String value) {
-    state = state.copyWith(nationalId: value);
-  }
-
-  void updateServiceId(int? serviceId) {
-    state = state.copyWith(selectedServiceId: serviceId);
+    state = state.copyWith(nationalId: value, errorMessage: null);
   }
 
   void updateService({int? id, String? name}) {
-    state = state.copyWith(selectedServiceId: id, primaryServiceName: name);
+    state = state.copyWith(
+      selectedServiceId: id,
+      primaryServiceName: name,
+      errorMessage: null,
+    );
   }
 
   // Seleccionar imagen de la galería
@@ -168,7 +167,7 @@ class WorkerSetupController extends _$WorkerSetupController {
   }
 
   void updateCustomServiceName(String value) {
-    state = state.copyWith(customServiceName: value);
+    state = state.copyWith(customServiceName: value, errorMessage: null);
   }
 
   void updateCustomServicePrice(String value) {
@@ -176,11 +175,18 @@ class WorkerSetupController extends _$WorkerSetupController {
     final filtered = value.replaceAll(RegExp(r'[^\d.]'), '');
     //Evitar multiples puntos decimales
     if (filtered.split('.').length > 2) return;
-    state = state.copyWith(customServicePrice: filtered);
+    state = state.copyWith(customServicePrice: filtered, errorMessage: null);
   }
 
   //Agregar servicio personalizado
   Future<void> addCustomService() async {
+    final exist = state.additionalServices.any(
+      (s) => s.name.toLowerCase() == state.customServiceName!.toLowerCase(),
+    );
+    if (exist) {
+      state = state.copyWith(errorMessage: 'Este servicio ya fue agregado');
+      return;
+    }
     if (state.customServiceName == null || state.customServiceName!.isEmpty) {
       state = state.copyWith(errorMessage: 'Ingresa el nombre del servicio');
       return;
@@ -216,7 +222,7 @@ class WorkerSetupController extends _$WorkerSetupController {
   //Descripcion breve
   void updateDescription(String value) {
     if (value.length <= 500) {
-      state = state.copyWith(description: value);
+      state = state.copyWith(description: value, errorMessage: null);
     }
   }
 
@@ -232,7 +238,7 @@ class WorkerSetupController extends _$WorkerSetupController {
       if (image != null) {
         final updatePhotos = List<String?>.from(state.workPhotos);
         updatePhotos[index] = image.path;
-        state = state.copyWith(workPhotos: updatePhotos);
+        state = state.copyWith(workPhotos: updatePhotos, errorMessage: null);
       }
     } catch (e) {
       state = state.copyWith(errorMessage: 'Error al seleccionar imagen');
@@ -273,10 +279,12 @@ class WorkerSetupController extends _$WorkerSetupController {
         return false;
       }
     }
-    state = state.copyWith(
-      currentStep: state.currentStep + 1,
-      errorMessage: null,
-    );
+    if (state.currentStep < 2) {
+      state = state.copyWith(
+        currentStep: state.currentStep + 1,
+        errorMessage: null,
+      );
+    }
     return true;
   }
 
@@ -291,11 +299,11 @@ class WorkerSetupController extends _$WorkerSetupController {
   }
 
   void updateSector(String value) {
-    state = state.copyWith(sector: value);
+    state = state.copyWith(sector: value, errorMessage: null);
   }
 
   void updateAddress(String value) {
-    state = state.copyWith(address: value);
+    state = state.copyWith(address: value, errorMessage: null);
   }
 
   void toggleDay(int day) {
@@ -363,18 +371,25 @@ class WorkerSetupController extends _$WorkerSetupController {
   }
 
   //Guardar todo en Supabase (al finalizar)
+
   Future<bool> saveWorkerProfile() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
+
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) throw Exception('Usuario no autenticado');
 
-      //Subir avatar a Storage si existe
+      // =========================
+      // 1. SUBIR AVATAR
+      // =========================
       String? avatarUrl;
+
       if (state.avatarPath != null) {
         final avatarFile = File(state.avatarPath!);
         final avatarExt = state.avatarPath!.split('.').last;
-        final storagePath = 'avatars/$userId.$avatarExt';
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+
+        final storagePath = 'avatars/$userId/$timestamp.$avatarExt';
 
         await _supabase.storage
             .from('profiles')
@@ -383,34 +398,32 @@ class WorkerSetupController extends _$WorkerSetupController {
               avatarFile,
               fileOptions: const FileOptions(upsert: true),
             );
+
         avatarUrl = _supabase.storage
             .from('profiles')
             .getPublicUrl(storagePath);
       }
 
-      //2. Subir fotos de trabajos a storage
-      final workPhotoUrls = <String>[];
-      for (var i = 0; i < state.workPhotos.length; i++) {
-        final photoPath = state.workPhotos[i];
-        if (photoPath != null) {
-          final photoFile = File(photoPath);
-          final photoExt = photoPath.split('.').last;
-          final storagePath = 'work_photos/$userId/${i}.$photoExt';
+      // =========================
+      // 2. SUBIR FOTOS EN PARALELO 🚀
+      // =========================
+      final uploadFutures = <Future<String>>[];
 
-          await _supabase.storage
-              .from('work_photos')
-              .upload(
-                storagePath,
-                photoFile,
-                fileOptions: const FileOptions(upsert: true),
-              );
-          final publicUrl = _supabase.storage
-              .from('work_photos')
-              .getPublicUrl(storagePath);
-          workPhotoUrls.add(publicUrl);
+      for (var i = 0; i < state.workPhotos.length; i++) {
+        final path = state.workPhotos[i];
+
+        if (path != null) {
+          uploadFutures.add(_uploadWorkPhoto(path, userId, i));
         }
       }
-      //3 Insertar/Actualizar en profiles
+
+      final workPhotoUrls = await Future.wait(uploadFutures);
+
+      // =========================
+      // 3. GUARDAR DATOS (ORDEN SEGURO)
+      // =========================
+
+      // profiles
       await _supabase.from('profiles').upsert({
         'id': userId,
         'first_name': state.firstName,
@@ -420,15 +433,14 @@ class WorkerSetupController extends _$WorkerSetupController {
         'avatar_url': avatarUrl,
       });
 
-      //4 Insertar en user_identity
-
+      // identidad
       await _supabase.from('user_identity').upsert({
         'user_id': userId,
         'national_id': state.nationalId,
         'verified': false,
       });
 
-      //5 Insertar en worker_profiles
+      // worker profile
       await _supabase.from('worker_profiles').upsert({
         'user_id': userId,
         'bio': state.description,
@@ -438,11 +450,12 @@ class WorkerSetupController extends _$WorkerSetupController {
         'longitude': state.longitude,
         'available_days': state.availableDaysAsInt,
         'available_emergency': state.availableEmergency,
+        'work_photos': workPhotoUrls, // 🔥 guardas URLs directamente
       });
 
-      //6 Insertar servicios (principal + adicionales)
-      //Servicio principal
-
+      // =========================
+      // 4. SERVICIO PRINCIPAL
+      // =========================
       if (state.selectedServiceId != null) {
         await _supabase.from('worker_services').upsert({
           'worker_id': userId,
@@ -451,11 +464,12 @@ class WorkerSetupController extends _$WorkerSetupController {
           'base_price': null,
         });
       }
-      //Servicios adicionales
 
+      // =========================
+      // 5. SERVICIOS ADICIONALES
+      // =========================
       for (final service in state.additionalServices) {
         if (service.serviceId != null) {
-          //Servicios existente
           await _supabase.from('worker_services').insert({
             'worker_id': userId,
             'service_id': service.serviceId,
@@ -463,12 +477,12 @@ class WorkerSetupController extends _$WorkerSetupController {
             'base_price': service.basePrice,
           });
         } else {
-          //Servicios personalizados - primero crear en services
           final newService = await _supabase
               .from('services')
               .insert({'name': service.name})
               .select('id')
               .single();
+
           await _supabase.from('worker_services').insert({
             'worker_id': userId,
             'service_id': newService['id'],
@@ -477,6 +491,7 @@ class WorkerSetupController extends _$WorkerSetupController {
           });
         }
       }
+
       state = state.copyWith(isLoading: false);
       return true;
     } catch (e) {
@@ -486,5 +501,23 @@ class WorkerSetupController extends _$WorkerSetupController {
       );
       return false;
     }
+  }
+
+  Future<String> _uploadWorkPhoto(String path, String userId, int index) async {
+    final file = File(path);
+    final ext = path.split('.').last;
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+
+    final storagePath = 'work_photos/$userId/${index}_$timestamp.$ext';
+
+    await _supabase.storage
+        .from('work_photos')
+        .upload(
+          storagePath,
+          file,
+          fileOptions: const FileOptions(upsert: true),
+        );
+
+    return _supabase.storage.from('work_photos').getPublicUrl(storagePath);
   }
 }

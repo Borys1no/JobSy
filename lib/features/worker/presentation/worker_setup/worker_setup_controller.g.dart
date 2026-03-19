@@ -7,7 +7,7 @@ part of 'worker_setup_controller.dart';
 // **************************************************************************
 
 String _$workerSetupControllerHash() =>
-    r'1c32f0bc84fefe68f2456adc3a069855af6d1543';
+    r'fc9158c435baa2a7408b00b01314094522f9682d';
 
 /// See also [WorkerSetupController].
 @ProviderFor(WorkerSetupController)

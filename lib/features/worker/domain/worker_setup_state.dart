@@ -2,7 +2,6 @@ class WorkerSetupState {
   final String firstName;
   final String lastName;
   final String nationalId;
-  final int? primaryServiceId;
   final String? primaryServiceName;
   final int? selectedServiceId; // ID de la profesión seleccionada
   final String? avatarPath; // Path local temporal
@@ -41,7 +40,6 @@ class WorkerSetupState {
     this.firstName = '',
     this.lastName = '',
     this.nationalId = '',
-    this.primaryServiceId,
     this.primaryServiceName,
     this.selectedServiceId,
     this.avatarPath,
@@ -88,6 +86,7 @@ class WorkerSetupState {
     String? avatarUrl,
     bool? isLoading,
     String? errorMessage,
+    bool clearErrorMessage = false,
     int? currentStep,
     String? expandingChipId,
     String? customServiceName,
@@ -114,20 +113,24 @@ class WorkerSetupState {
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       nationalId: nationalId ?? this.nationalId,
-      primaryServiceId: primaryServiceId ?? this.primaryServiceId,
       primaryServiceName: primaryServiceName ?? this.primaryServiceName,
       selectedServiceId: selectedServiceId ?? this.selectedServiceId,
       avatarPath: avatarPath ?? this.avatarPath,
       additionalServices: additionalServices ?? this.additionalServices,
       description: description ?? this.description,
-      workPhotos: workPhotos ?? this.workPhotos,
+      workPhotos: (workPhotos ?? this.workPhotos).length == 3
+          ? workPhotos ?? this.workPhotos
+          : this.workPhotos,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       isLoading: isLoading ?? this.isLoading,
-      errorMessage: errorMessage,
+      errorMessage: clearErrorMessage
+          ? null
+          : errorMessage ?? this.errorMessage,
+
       currentStep: currentStep ?? this.currentStep,
-      expandingChipId: expandingChipId,
-      customServiceName: customServiceName,
-      customServicePrice: customServicePrice,
+      expandingChipId: expandingChipId ?? this.expandingChipId,
+      customServiceName: customServiceName ?? this.customServiceName,
+      customServicePrice: customServicePrice ?? this.customServicePrice,
       showCustomForm: showCustomForm ?? this.showCustomForm,
       // Paso 3
       isGettingLocation: isGettingLocation ?? this.isGettingLocation,
@@ -270,10 +273,24 @@ class AdditionalService {
     );
   }
 
-  Map<String, dynamic> toJson() => {
-    'serviceId': serviceId,
-    'name': name,
-    'basePrice': basePrice,
-    'isCustom': isCustom,
+  Map<String, dynamic> toDbMap(String userId) => {
+    'worker_id': userId,
+    'service_id': serviceId,
+    'base_price': basePrice,
   };
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AdditionalService &&
+          serviceId == other.serviceId &&
+          name == other.name &&
+          basePrice == other.basePrice &&
+          isCustom == other.isCustom;
+
+  @override
+  int get hashCode =>
+      serviceId.hashCode ^
+      name.hashCode ^
+      basePrice.hashCode ^
+      isCustom.hashCode;
 }
