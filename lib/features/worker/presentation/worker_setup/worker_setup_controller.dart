@@ -117,15 +117,32 @@ class WorkerSetupController extends _$WorkerSetupController {
     required String serviceName,
     required double price,
   }) {
-    final newService = AdditionalService(
-      serviceId: serviceId,
-      name: serviceName,
-      basePrice: price,
-      isCustom: false,
+    final existingIndex = state.additionalServices.indexWhere(
+      (s) => s.serviceId == serviceId,
     );
+
     final updatedServices = List<AdditionalService>.from(
       state.additionalServices,
-    )..add(newService);
+    );
+
+    if (existingIndex != -1) {
+      updatedServices[existingIndex] = AdditionalService(
+        serviceId: serviceId,
+        name: serviceName,
+        basePrice: price,
+        isCustom: false,
+      );
+    } else {
+      updatedServices.add(
+        AdditionalService(
+          serviceId: serviceId,
+          name: serviceName,
+          basePrice: price,
+          isCustom: false,
+        ),
+      );
+    }
+
     state = state.copyWith(
       additionalServices: updatedServices,
       expandingChipId: null,
@@ -249,7 +266,13 @@ class WorkerSetupController extends _$WorkerSetupController {
         return false;
       }
     }
-
+    if (state.currentStep == 1) {
+      final error = validateStep2();
+      if (error != null) {
+        state = state.copyWith(errorMessage: error);
+        return false;
+      }
+    }
     state = state.copyWith(
       currentStep: state.currentStep + 1,
       errorMessage: null,
@@ -275,28 +298,28 @@ class WorkerSetupController extends _$WorkerSetupController {
     state = state.copyWith(address: value);
   }
 
-  void toggleDay(String day) {
+  void toggleDay(int day) {
     switch (day) {
-      case 'Lunes':
+      case 0: // Domingo
+        state = state.copyWith(availableSunday: !state.availableSunday);
+        break;
+      case 1: // Lunes
         state = state.copyWith(availableMonday: !state.availableMonday);
         break;
-      case 'Martes':
+      case 2: // Martes
         state = state.copyWith(availableTuesday: !state.availableTuesday);
         break;
-      case 'Miércoles':
+      case 3: // Miércoles
         state = state.copyWith(availableWednesday: !state.availableWednesday);
         break;
-      case 'Jueves':
+      case 4: // Jueves
         state = state.copyWith(availableThursday: !state.availableThursday);
         break;
-      case 'Viernes':
+      case 5: // Viernes
         state = state.copyWith(availableFriday: !state.availableFriday);
         break;
-      case 'Sábado':
+      case 6: // Sábado
         state = state.copyWith(availableSaturday: !state.availableSaturday);
-        break;
-      case 'Domingo':
-        state = state.copyWith(availableSunday: !state.availableSunday);
         break;
     }
   }
@@ -306,7 +329,7 @@ class WorkerSetupController extends _$WorkerSetupController {
   }
 
   Future<void> getCurrentLocation() async {
-    state = state.copyWith(isGettinLocation: true, errorMessage: null);
+    state = state.copyWith(isGettingLocation: true, errorMessage: null);
 
     try {
       await Future.delayed(const Duration(seconds: 1));
@@ -316,11 +339,11 @@ class WorkerSetupController extends _$WorkerSetupController {
         longitude: -79.922359,
         sector: 'Urdesa',
         address: 'Av. Principal y Calle Secundaria',
-        isGettinLocation: false,
+        isGettingLocation: false,
       );
     } catch (e) {
       state = state.copyWith(
-        isGettinLocation: false,
+        isGettingLocation: false,
         errorMessage: 'No se pudo obtener la ubicación',
       );
     }
@@ -333,7 +356,7 @@ class WorkerSetupController extends _$WorkerSetupController {
     if (state.address.isEmpty) {
       return 'Ingresa tu dirección';
     }
-    if (state.availableDays.isEmpty) {
+    if (state.availableDaysAsInt.isEmpty) {
       return 'Selecciona al menos un día de disponibilidad';
     }
     return null;
@@ -350,17 +373,19 @@ class WorkerSetupController extends _$WorkerSetupController {
       String? avatarUrl;
       if (state.avatarPath != null) {
         final avatarFile = File(state.avatarPath!);
-        final avatarExt = avatarPath!.split('.').last;
-        final avatarPath = 'avatars/$userId.avatarExt';
+        final avatarExt = state.avatarPath!.split('.').last;
+        final storagePath = 'avatars/$userId.$avatarExt';
 
         await _supabase.storage
             .from('profiles')
             .upload(
-              avatarPath,
+              storagePath,
               avatarFile,
               fileOptions: const FileOptions(upsert: true),
             );
-        avatarUrl = _supabase.storage.from('profiles').getPublicUrl(avatarPath);
+        avatarUrl = _supabase.storage
+            .from('profiles')
+            .getPublicUrl(storagePath);
       }
 
       //2. Subir fotos de trabajos a storage
@@ -370,7 +395,7 @@ class WorkerSetupController extends _$WorkerSetupController {
         if (photoPath != null) {
           final photoFile = File(photoPath);
           final photoExt = photoPath.split('.').last;
-          final storagePath = 'work_photos/$userId/${i}_$photoExt';
+          final storagePath = 'work_photos/$userId/${i}.$photoExt';
 
           await _supabase.storage
               .from('work_photos')
@@ -411,17 +436,17 @@ class WorkerSetupController extends _$WorkerSetupController {
         'address': state.address,
         'latitude': state.latitude,
         'longitude': state.longitude,
-        'available_days': state.availableDays,
+        'available_days': state.availableDaysAsInt,
         'available_emergency': state.availableEmergency,
       });
 
       //6 Insertar servicios (principal + adicionales)
       //Servicio principal
 
-      if (state.primaryServiceId != null) {
+      if (state.selectedServiceId != null) {
         await _supabase.from('worker_services').upsert({
           'worker_id': userId,
-          'service_id': state.primaryServiceId,
+          'service_id': state.selectedServiceId,
           'service_type': 'primary',
           'base_price': null,
         });

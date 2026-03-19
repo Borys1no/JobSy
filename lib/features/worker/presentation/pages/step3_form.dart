@@ -8,10 +8,11 @@ class Step3Form extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final controller = ref.read(workerSetupStateNotifierProvider.notifier);
-    final state = ref.watch(workerSetupStateNotifierProvider);
+    final controller = ref.read(workerSetupControllerProvider.notifier);
+    final state = ref.watch(workerSetupControllerProvider);
 
     return TopBackgroundLayout(
+      title: 'Registra tu direccion',
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
@@ -144,41 +145,41 @@ class Step3Form extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
 
-              // Días de la semana
+              // ✅ CORREGIDO: Mapeo de días a int para toggleDay
               _buildDaySwitch(
                 label: 'Lunes',
                 value: state.availableMonday,
-                onChanged: (_) => controller.toggleDay('Lunes'),
+                onChanged: (_) => controller.toggleDay(1), // Lunes = 1
               ),
               _buildDaySwitch(
                 label: 'Martes',
                 value: state.availableTuesday,
-                onChanged: (_) => controller.toggleDay('Martes'),
+                onChanged: (_) => controller.toggleDay(2), // Martes = 2
               ),
               _buildDaySwitch(
                 label: 'Miércoles',
                 value: state.availableWednesday,
-                onChanged: (_) => controller.toggleDay('Miércoles'),
+                onChanged: (_) => controller.toggleDay(3), // Miércoles = 3
               ),
               _buildDaySwitch(
                 label: 'Jueves',
                 value: state.availableThursday,
-                onChanged: (_) => controller.toggleDay('Jueves'),
+                onChanged: (_) => controller.toggleDay(4), // Jueves = 4
               ),
               _buildDaySwitch(
                 label: 'Viernes',
                 value: state.availableFriday,
-                onChanged: (_) => controller.toggleDay('Viernes'),
+                onChanged: (_) => controller.toggleDay(5), // Viernes = 5
               ),
               _buildDaySwitch(
                 label: 'Sábado',
                 value: state.availableSaturday,
-                onChanged: (_) => controller.toggleDay('Sábado'),
+                onChanged: (_) => controller.toggleDay(6), // Sábado = 6
               ),
               _buildDaySwitch(
                 label: 'Domingo',
                 value: state.availableSunday,
-                onChanged: (_) => controller.toggleDay('Domingo'),
+                onChanged: (_) => controller.toggleDay(0), // Domingo = 0
               ),
 
               const Divider(height: 32),
@@ -235,7 +236,6 @@ class Step3Form extends ConsumerWidget {
 
                           final success = await controller.saveWorkerProfile();
                           if (success && context.mounted) {
-                            // TODO: Navegar a pantalla de éxito o home
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('¡Perfil completado con éxito!'),
@@ -276,7 +276,12 @@ class Step3Form extends ConsumerWidget {
       child: Row(
         children: [
           Expanded(child: Text(label, style: const TextStyle(fontSize: 16))),
-          Switch(value: value, onChanged: onChanged, activeColor: Colors.blue),
+          // ✅ CORREGIDO: activeColor deprecado, usar activeThumbColor
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeThumbColor: Colors.blue,
+          ),
         ],
       ),
     );
