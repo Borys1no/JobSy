@@ -125,6 +125,18 @@ class Step1Form extends ConsumerWidget {
                 controller: TextEditingController(text: state.nationalId),
                 onChanged: controller.updateNationalId,
               ),
+
+              TextField(
+                decoration: const InputDecoration(
+                  labelText: 'Teléfono',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.phone),
+                  helperText: 'Ej: 0991234567',
+                ),
+                keyboardType: TextInputType.phone,
+                maxLength: 10,
+                onChanged: controller.updatePhone,
+              ),
               const SizedBox(height: 16),
 
               //Dropdpown de profesiones

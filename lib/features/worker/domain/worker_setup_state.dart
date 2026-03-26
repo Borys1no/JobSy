@@ -2,6 +2,7 @@ class WorkerSetupState {
   final String firstName;
   final String lastName;
   final String nationalId;
+  final String phone;
   final String? primaryServiceName;
   final int? selectedServiceId; // ID de la profesión seleccionada
   final String? avatarPath; // Path local temporal
@@ -16,6 +17,8 @@ class WorkerSetupState {
   final String? customServiceName;
   final String? customServicePrice;
   final bool showCustomForm;
+
+  final Map<int, String> servicePrices;
 
   // Paso 3 - Ubicación
   final bool isGettingLocation;
@@ -40,6 +43,7 @@ class WorkerSetupState {
     this.firstName = '',
     this.lastName = '',
     this.nationalId = '',
+    this.phone = '',
     this.primaryServiceName,
     this.selectedServiceId,
     this.avatarPath,
@@ -70,12 +74,15 @@ class WorkerSetupState {
     this.availableSaturday = false,
     this.availableSunday = false,
     this.availableEmergency = false,
+
+    this.servicePrices = const {},
   });
 
   WorkerSetupState copyWith({
     String? firstName,
     String? lastName,
     String? nationalId,
+    String? phone,
     int? primaryServiceId,
     String? primaryServiceName,
     int? selectedServiceId,
@@ -108,11 +115,13 @@ class WorkerSetupState {
     bool? availableSaturday,
     bool? availableSunday,
     bool? availableEmergency,
+    Map<int, String>? servicePrices,
   }) {
     return WorkerSetupState(
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       nationalId: nationalId ?? this.nationalId,
+      phone: phone ?? this.phone,
       primaryServiceName: primaryServiceName ?? this.primaryServiceName,
       selectedServiceId: selectedServiceId ?? this.selectedServiceId,
       avatarPath: avatarPath ?? this.avatarPath,
@@ -148,6 +157,7 @@ class WorkerSetupState {
       availableSaturday: availableSaturday ?? this.availableSaturday,
       availableSunday: availableSunday ?? this.availableSunday,
       availableEmergency: availableEmergency ?? this.availableEmergency,
+      servicePrices: servicePrices ?? this.servicePrices,
     );
   }
 

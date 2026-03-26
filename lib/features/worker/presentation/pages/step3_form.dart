@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jobsy/features/worker/presentation/pages/succes_screen.dart';
 import '../../../../core/widgets/top_background_layout.dart';
 import '../worker_setup/worker_setup_controller.dart';
 
@@ -18,10 +19,6 @@ class Step3Form extends ConsumerWidget {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
-            onPressed: () => controller.goToPreviousStep(),
-          ),
           title: const Text(
             'Paso 3 de 3',
             style: TextStyle(color: Colors.grey, fontSize: 14),
@@ -86,7 +83,7 @@ class Step3Form extends ConsumerWidget {
                     child: TextField(
                       decoration: const InputDecoration(
                         labelText: 'Sector',
-                        hintText: 'Ej: Urdesa, Norte, Centro',
+                        hintText: 'Ej: Urdesa, Alborada, Samanes ',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.map),
                       ),
@@ -94,28 +91,6 @@ class Step3Form extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Expanded(
-                    flex: 1,
-                    child: ElevatedButton.icon(
-                      onPressed: state.isGettingLocation
-                          ? null
-                          : () => controller.getCurrentLocation(),
-                      icon: state.isGettingLocation
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.my_location, size: 18),
-                      label: Text(
-                        state.isGettingLocation ? '...' : 'Ubicación',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                    ),
-                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -132,6 +107,10 @@ class Step3Form extends ConsumerWidget {
                 onChanged: controller.updateAddress,
               ),
               const SizedBox(height: 32),
+              Text(
+                '📍 Por ahora esta app solo está disponible en Guayaquil. Próximamente más ciudades.',
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
 
               // Disponibilidad
               const Text(
@@ -149,37 +128,37 @@ class Step3Form extends ConsumerWidget {
               _buildDaySwitch(
                 label: 'Lunes',
                 value: state.availableMonday,
-                onChanged: (_) => controller.toggleDay(1), // Lunes = 1
+                onTap: () => controller.toggleDay(1), // Lunes = 1
               ),
               _buildDaySwitch(
                 label: 'Martes',
                 value: state.availableTuesday,
-                onChanged: (_) => controller.toggleDay(2), // Martes = 2
+                onTap: () => controller.toggleDay(2), // Martes = 2
               ),
               _buildDaySwitch(
                 label: 'Miércoles',
                 value: state.availableWednesday,
-                onChanged: (_) => controller.toggleDay(3), // Miércoles = 3
+                onTap: () => controller.toggleDay(3), // Miércoles = 3
               ),
               _buildDaySwitch(
                 label: 'Jueves',
                 value: state.availableThursday,
-                onChanged: (_) => controller.toggleDay(4), // Jueves = 4
+                onTap: () => controller.toggleDay(4), // Jueves = 4
               ),
               _buildDaySwitch(
                 label: 'Viernes',
                 value: state.availableFriday,
-                onChanged: (_) => controller.toggleDay(5), // Viernes = 5
+                onTap: () => controller.toggleDay(5), // Viernes = 5
               ),
               _buildDaySwitch(
                 label: 'Sábado',
                 value: state.availableSaturday,
-                onChanged: (_) => controller.toggleDay(6), // Sábado = 6
+                onTap: () => controller.toggleDay(6), // Sábado = 6
               ),
               _buildDaySwitch(
                 label: 'Domingo',
                 value: state.availableSunday,
-                onChanged: (_) => controller.toggleDay(0), // Domingo = 0
+                onTap: () => controller.toggleDay(0), // Domingo = 0
               ),
 
               const Divider(height: 32),
@@ -236,10 +215,10 @@ class Step3Form extends ConsumerWidget {
 
                           final success = await controller.saveWorkerProfile();
                           if (success && context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('¡Perfil completado con éxito!'),
-                                backgroundColor: Colors.green,
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const SuccesScreen(),
                               ),
                             );
                             // Navigator.pushReplacement...
@@ -256,7 +235,10 @@ class Step3Form extends ConsumerWidget {
                         },
                   child: state.isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Finalizar', style: TextStyle(fontSize: 16)),
+                      : const Text(
+                          'Finalizar registro',
+                          style: TextStyle(fontSize: 16),
+                        ),
                 ),
               ),
             ],
@@ -269,17 +251,36 @@ class Step3Form extends ConsumerWidget {
   Widget _buildDaySwitch({
     required String label,
     required bool value,
-    required ValueChanged<bool> onChanged,
+    required VoidCallback onTap,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: value ? Colors.blue[50] : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: value ? Colors.blue : Colors.grey[300]!),
+      ),
       child: Row(
         children: [
-          Expanded(child: Text(label, style: const TextStyle(fontSize: 16))),
-          // ✅ CORREGIDO: activeColor deprecado, usar activeThumbColor
+          Icon(
+            value ? Icons.check_circle : Icons.circle_outlined,
+            color: value ? Colors.blue : Colors.grey,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: value ? FontWeight.w600 : FontWeight.normal,
+                color: value ? Colors.blue[700] : Colors.black87,
+              ),
+            ),
+          ),
           Switch(
             value: value,
-            onChanged: onChanged,
+            onChanged: (_) => onTap(),
             activeThumbColor: Colors.blue,
           ),
         ],

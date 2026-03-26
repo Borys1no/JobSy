@@ -226,7 +226,11 @@ class Step2Form extends ConsumerWidget {
                                                         decimal: true,
                                                       ),
                                                   onChanged: (value) {
-                                                    // Temporalmente guardamos en un lugar
+                                                    controller
+                                                        .updateServicePrice(
+                                                          serviceId,
+                                                          value,
+                                                        );
                                                   },
                                                 ),
                                                 const SizedBox(height: 8),
@@ -249,14 +253,39 @@ class Step2Form extends ConsumerWidget {
                                                       onPressed: () {
                                                         // Aquí capturaríamos el precio del TextField
                                                         // Por simplicidad, usaremos un valor fijo para este ejemplo
+                                                        final priceString =
+                                                            state
+                                                                .servicePrices[serviceId] ??
+                                                            '';
+                                                        final price =
+                                                            double.tryParse(
+                                                              priceString,
+                                                            ) ??
+                                                            0;
+
+                                                        if (price <= 0) {
+                                                          ScaffoldMessenger.of(
+                                                            context,
+                                                          ).showSnackBar(
+                                                            const SnackBar(
+                                                              content: Text(
+                                                                'Ingresa un precio válido',
+                                                              ),
+                                                            ),
+                                                          );
+                                                          return;
+                                                        }
                                                         controller
                                                             .addPopularService(
                                                               serviceId:
                                                                   serviceId,
                                                               serviceName:
                                                                   serviceName,
-                                                              price:
-                                                                  25.0, // Esto debería venir del TextField
+                                                              price: price,
+                                                            );
+                                                        controller
+                                                            .setExpadingChip(
+                                                              null,
                                                             );
                                                       },
                                                       child: const Text(
@@ -527,7 +556,9 @@ class Step2Form extends ConsumerWidget {
                           contentPadding: const EdgeInsets.all(12),
                           counterText: '${state.description.length}/500',
                         ),
-                        onChanged: controller.updateDescription,
+                        controller: TextEditingController(
+                          text: state.description,
+                        ),
                       ),
                     ),
                   ],
@@ -557,12 +588,16 @@ class Step2Form extends ConsumerWidget {
                     ),
                     const SizedBox(height: 16),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: List.generate(3, (index) {
-                        return PhotoSlot(
-                          index: index,
-                          imagePath: state.workPhotos[index],
-                          onTap: () => controller.pickWorkPhoto(index),
+                        return Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(right: index != 2 ? 8 : 0),
+                            child: PhotoSlot(
+                              index: index,
+                              imagePath: state.workPhotos[index],
+                              onTap: () => controller.pickWorkPhoto(index),
+                            ),
+                          ),
                         );
                       }),
                     ),
@@ -578,6 +613,13 @@ class Step2Form extends ConsumerWidget {
                     onPressed: state.isLoading
                         ? null
                         : () async {
+                            final error = controller.validateStep2();
+                            if (error != null) {
+                              ScaffoldMessenger.of(
+                                context,
+                              ).showSnackBar(SnackBar(content: Text(error)));
+                              return;
+                            }
                             final success = await controller.goToNextStep();
                             if (!success && context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(

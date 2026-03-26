@@ -56,10 +56,16 @@ class WorkerSetupController extends _$WorkerSetupController {
     required String lastName,
     required String nationalId,
     required int? serviceId,
+    required String phone,
   }) {
     if (firstName.isEmpty) return 'Ingresa tus nombres';
     if (lastName.isEmpty) return 'Ingresa tus apellidos';
     if (nationalId.isEmpty) return 'Ingresa tu cédula';
+    if (phone.isEmpty) return 'Ingresa tu número de teléfono';
+    if (phone.length < 9) return 'Número de teléfono inválido';
+    if (!phone.startsWith('09')) {
+      return 'El número debe comenzar con 09';
+    }
     if (!_validateEcuadorianId(nationalId)) return 'Cédula inválida';
     if (serviceId == null) return 'Selecciona una profesión';
     return null;
@@ -76,6 +82,11 @@ class WorkerSetupController extends _$WorkerSetupController {
 
   void updateNationalId(String value) {
     state = state.copyWith(nationalId: value, errorMessage: null);
+  }
+
+  void updatePhone(String value) {
+    final filtered = value.replaceAll(RegExp(r'[^\d]'), '');
+    state = state.copyWith(phone: filtered);
   }
 
   void updateService({int? id, String? name}) {
@@ -265,6 +276,7 @@ class WorkerSetupController extends _$WorkerSetupController {
         lastName: state.lastName,
         nationalId: state.nationalId,
         serviceId: state.selectedServiceId,
+        phone: state.phone,
       );
 
       if (error != null) {
@@ -428,7 +440,7 @@ class WorkerSetupController extends _$WorkerSetupController {
         'id': userId,
         'first_name': state.firstName,
         'last_name': state.lastName,
-        'phone': '',
+        'phone': state.phone,
         'role': 'worker',
         'avatar_url': avatarUrl,
       });
@@ -519,5 +531,15 @@ class WorkerSetupController extends _$WorkerSetupController {
         );
 
     return _supabase.storage.from('work_photos').getPublicUrl(storagePath);
+  }
+
+  void updateServicePrice(int serviceId, String value) {
+    final filtered = value.replaceAll(RegExp(r'[^\d.]'), '');
+
+    if (filtered.split('.').length > 2) return;
+
+    final updated = Map<int, String>.from(state.servicePrices);
+    updated[serviceId] = filtered;
+    state = state.copyWith(servicePrices: updated);
   }
 }
