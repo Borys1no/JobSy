@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jobsy/features/worker/presentation/pages/loading_screen.dart';
 import 'package:jobsy/features/worker/presentation/pages/succes_screen.dart';
 import '../../../../core/widgets/top_background_layout.dart';
 import '../worker_setup/worker_setup_controller.dart';
@@ -212,13 +213,34 @@ class Step3Form extends ConsumerWidget {
                             );
                             return;
                           }
+                          Navigator.push(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder: (_, __, ___) =>
+                                  const LoadingScreen(),
+                              transitionsBuilder: (_, animation, __, child) {
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: child,
+                                );
+                              },
+                            ),
+                          );
 
                           final success = await controller.saveWorkerProfile();
-                          if (success && context.mounted) {
+
+                          if (context.mounted) {
                             Navigator.pushReplacement(
                               context,
-                              MaterialPageRoute(
-                                builder: (_) => const SuccesScreen(),
+                              PageRouteBuilder(
+                                pageBuilder: (_, __, ___) =>
+                                    const SuccessScreen(),
+                                transitionsBuilder: (_, animation, __, child) {
+                                  return FadeTransition(
+                                    opacity: animation,
+                                    child: child,
+                                  );
+                                },
                               ),
                             );
                             // Navigator.pushReplacement...

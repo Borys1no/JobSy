@@ -1,7 +1,36 @@
 import 'package:flutter/material.dart';
 
-class SuccesScreen extends StatelessWidget {
-  const SuccesScreen({super.key});
+class SuccessScreen extends StatefulWidget {
+  const SuccessScreen({super.key});
+
+  @override
+  State<SuccessScreen> createState() => _SuccessScreenState();
+}
+
+class _SuccessScreenState extends State<SuccessScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+
+    _scale = CurvedAnimation(parent: _controller, curve: Curves.elasticOut);
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,14 +41,18 @@ class SuccesScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.green[100],
-                  shape: BoxShape.circle,
+              ScaleTransition(
+                scale: _scale,
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.green[100],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.check, size: 80, color: Colors.green[700]),
                 ),
-                child: Icon(Icons.check, size: 80, color: Colors.green[700]),
               ),
+
               const SizedBox(height: 32),
 
               const Text(
@@ -32,7 +65,7 @@ class SuccesScreen extends StatelessWidget {
               Text(
                 'Tu perfil ya está listo.\nAhora puedes comenzar a recibir trabajos.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                style: TextStyle(color: Colors.grey[600]),
               ),
 
               const SizedBox(height: 40),
@@ -42,17 +75,9 @@ class SuccesScreen extends StatelessWidget {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: () {
-                    //AQUI DEBE REDIRIGIR AL HOME, QUEDA PENDIENTE
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/home',
-                      (route) => false,
-                    );
+                    Navigator.pop(context); // temporal
                   },
-                  child: const Text(
-                    'Continuar',
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  child: const Text('Continuar'),
                 ),
               ),
             ],
