@@ -12,7 +12,7 @@ class Step2Form extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.read(workerSetupControllerProvider.notifier);
     final state = ref.watch(workerSetupControllerProvider);
-    final popularServicesAsync = ref.watch(popularServicesProvider);
+    final tasksAsync = ref.watch(tasksListProvider);
 
     return TopBackgroundLayout(
       title: 'Configuración del trabajador',
@@ -107,12 +107,10 @@ class Step2Form extends ConsumerWidget {
                       ),
                       const SizedBox(height: 12),
 
-                      popularServicesAsync.when(
-                        data: (popularServices) {
-                          final visibleServices = popularServices
-                              .take(6)
-                              .toList();
-                          final hasMore = popularServices.length > 6;
+                      tasksAsync.when(
+                        data: (tasks) {
+                          final visibleServices = tasks.take(6).toList();
+                          final hasMore = tasks.length > 6;
 
                           return Column(
                             children: [

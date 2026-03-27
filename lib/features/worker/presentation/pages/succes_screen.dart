@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jobsy/features/worker/presentation/pages/home_screen.dart';
 
 class SuccessScreen extends StatefulWidget {
   const SuccessScreen({super.key});
@@ -75,7 +76,11 @@ class _SuccessScreenState extends State<SuccessScreen>
                 height: 50,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pop(context); // temporal
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const HomeScreen()),
+                      (route) => false,
+                    );
                   },
                   child: const Text('Continuar'),
                 ),

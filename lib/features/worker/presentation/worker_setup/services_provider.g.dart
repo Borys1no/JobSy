@@ -42,5 +42,22 @@ final allServicesProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AllServicesRef = AutoDisposeFutureProviderRef<List<ServiceModel>>;
+String _$tasksListHash() => r'2eb035a1e0e667c72f2696e12c55259e687d8647';
+
+/// See also [tasksList].
+@ProviderFor(tasksList)
+final tasksListProvider = AutoDisposeFutureProvider<List<TaskModel>>.internal(
+  tasksList,
+  name: r'tasksListProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$tasksListHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef TasksListRef = AutoDisposeFutureProviderRef<List<TaskModel>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

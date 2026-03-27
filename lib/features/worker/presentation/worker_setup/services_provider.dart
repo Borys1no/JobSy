@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/config/supabase_client.dart';
 import '../../domain/service_model.dart';
 import 'package:riverpod/riverpod.dart';
+import '../../domain/task_model.dart';
 
 part 'services_provider.g.dart';
 
@@ -34,5 +35,20 @@ Future<List<ServiceModel>> allServices(AllServicesRef ref) async {
     return (response as List).map((e) => ServiceModel.fromMap(e)).toList();
   } catch (e) {
     throw Exception('Error cargando servicios: $e');
+  }
+}
+
+@riverpod
+Future<List<TaskModel>> tasksList(TasksListRef ref) async {
+  final supabase = ref.read(supabaseClientProvider);
+  try {
+    final response = await supabase
+        .from('tasks')
+        .select('id, name')
+        .order('name');
+
+    return (response as List).map((e) => TaskModel.fromMap(e)).toList();
+  } catch (e) {
+    throw Exception('Error cargando servicios populares: $e');
   }
 }

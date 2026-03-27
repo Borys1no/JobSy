@@ -93,27 +93,28 @@ class Step1Form extends ConsumerWidget {
 
               //Formulario
               TextField(
+                textDirection: TextDirection.ltr,
                 decoration: const InputDecoration(
                   labelText: 'Nombres',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.person),
                 ),
-                controller: TextEditingController(text: state.firstName),
                 onChanged: controller.updateFirstName,
               ),
               const SizedBox(height: 16),
               TextField(
+                textDirection: TextDirection.ltr,
                 decoration: const InputDecoration(
                   labelText: 'Apellidos',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.person_outline),
                 ),
-                controller: TextEditingController(text: state.lastName),
                 onChanged: controller.updateLastName,
               ),
               const SizedBox(height: 16),
 
               TextField(
+                textDirection: TextDirection.ltr,
                 decoration: const InputDecoration(
                   labelText: 'Cédula',
                   border: OutlineInputBorder(),
@@ -122,11 +123,11 @@ class Step1Form extends ConsumerWidget {
                 ),
                 keyboardType: TextInputType.number,
                 maxLength: 10,
-                controller: TextEditingController(text: state.nationalId),
                 onChanged: controller.updateNationalId,
               ),
 
               TextField(
+                textDirection: TextDirection.ltr,
                 decoration: const InputDecoration(
                   labelText: 'Teléfono',
                   border: OutlineInputBorder(),
