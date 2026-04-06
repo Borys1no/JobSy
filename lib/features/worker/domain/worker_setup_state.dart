@@ -4,7 +4,7 @@ class WorkerSetupState {
   final String nationalId;
   final String phone;
   final String? primaryServiceName;
-  final int? selectedServiceId; // ID de la profesión seleccionada
+  final String? selectedServiceId; // ID de la profesión seleccionada
   final String? avatarPath; // Path local temporal
   final List<AdditionalService> additionalServices;
   final String description;
@@ -18,7 +18,7 @@ class WorkerSetupState {
   final String? customServicePrice;
   final bool showCustomForm;
 
-  final Map<int, String> servicePrices;
+  final Map<String, String> servicePrices;
 
   // Paso 3 - Ubicación
   final bool isGettingLocation;
@@ -85,7 +85,7 @@ class WorkerSetupState {
     String? phone,
     int? primaryServiceId,
     String? primaryServiceName,
-    int? selectedServiceId,
+    String? selectedServiceId,
     String? avatarPath,
     List<AdditionalService>? additionalServices,
     String? description,
@@ -96,6 +96,7 @@ class WorkerSetupState {
     bool clearErrorMessage = false,
     int? currentStep,
     String? expandingChipId,
+    bool clearExpandingChipId = false,
     String? customServiceName,
     String? customServicePrice,
     bool? showCustomForm,
@@ -115,7 +116,7 @@ class WorkerSetupState {
     bool? availableSaturday,
     bool? availableSunday,
     bool? availableEmergency,
-    Map<int, String>? servicePrices,
+    Map<String, String>? servicePrices,
   }) {
     return WorkerSetupState(
       firstName: firstName ?? this.firstName,
@@ -137,7 +138,9 @@ class WorkerSetupState {
           : errorMessage ?? this.errorMessage,
 
       currentStep: currentStep ?? this.currentStep,
-      expandingChipId: expandingChipId ?? this.expandingChipId,
+      expandingChipId: clearExpandingChipId
+          ? null
+          : (expandingChipId ?? this.expandingChipId),
       customServiceName: customServiceName ?? this.customServiceName,
       customServicePrice: customServicePrice ?? this.customServicePrice,
       showCustomForm: showCustomForm ?? this.showCustomForm,
@@ -257,7 +260,7 @@ class WorkerSetupState {
 }
 
 class AdditionalService {
-  final int? serviceId;
+  final String? serviceId;
   final String name;
   final double basePrice;
   final bool isCustom;
@@ -270,7 +273,7 @@ class AdditionalService {
   });
 
   AdditionalService copyWith({
-    int? serviceId,
+    String? serviceId,
     String? name,
     double? basePrice,
     bool? isCustom,

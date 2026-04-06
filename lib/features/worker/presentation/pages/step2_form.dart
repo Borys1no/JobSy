@@ -5,11 +5,30 @@ import '../worker_setup/worker_setup_controller.dart';
 import '../worker_setup/services_provider.dart';
 import '../worker_setup/widgets/photo_slot.dart';
 
-class Step2Form extends ConsumerWidget {
+class Step2Form extends ConsumerStatefulWidget {
   const Step2Form({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<Step2Form> createState() => _Step2FormState();
+}
+
+class _Step2FormState extends ConsumerState<Step2Form> {
+  final Map<String, FocusNode> _focusNodes = {};
+
+  @override
+  void dispose() {
+    for (final node in _focusNodes.values) {
+      node.dispose();
+    }
+    super.dispose();
+  }
+
+  FocusNode _getFocusNode(String serviceId) {
+    return _focusNodes.putIfAbsent(serviceId, () => FocusNode());
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final controller = ref.read(workerSetupControllerProvider.notifier);
     final state = ref.watch(workerSetupControllerProvider);
     final tasksAsync = ref.watch(tasksListProvider);
@@ -18,8 +37,12 @@ class Step2Form extends ConsumerWidget {
       title: 'Configuración del trabajador',
       child: GestureDetector(
         onTap: () {
-          controller.setExpadingChip(null);
-        }, // Cerrar expandible al tocar fuera
+          for (final node in _focusNodes.values) {
+            node.unfocus();
+          }
+          controller.setExpandingChip(null);
+        },
+        behavior: HitTestBehavior.translucent,
         child: Scaffold(
           backgroundColor: Colors.transparent,
           appBar: AppBar(
@@ -119,11 +142,10 @@ class Step2Form extends ConsumerWidget {
                                 runSpacing: 8,
                                 children: [
                                   ...visibleServices.map((service) {
-                                    final serviceId = service.id;
+                                    final String serviceId = service.id;
                                     final serviceName = service.name;
                                     final isExpanding =
-                                        state.expandingChipId ==
-                                        serviceId.toString();
+                                        state.expandingChipId == serviceId;
 
                                     return Column(
                                       crossAxisAlignment:
@@ -131,12 +153,27 @@ class Step2Form extends ConsumerWidget {
                                       children: [
                                         // Chip
                                         GestureDetector(
-                                          onTap: () =>
-                                              controller.setExpadingChip(
-                                                isExpanding
-                                                    ? null
-                                                    : serviceId.toString(),
-                                              ),
+                                          onTap: () {
+                                            if (isExpanding) {
+                                              _getFocusNode(
+                                                serviceId,
+                                              ).unfocus();
+                                              controller.setExpandingChip(null);
+                                            } else {
+                                              controller.setExpandingChip(
+                                                serviceId.toString(),
+                                              );
+                                              Future.delayed(
+                                                const Duration(
+                                                  milliseconds: 100,
+                                                ),
+                                                () => _getFocusNode(
+                                                  serviceId,
+                                                ).requestFocus(),
+                                              );
+                                            }
+                                          },
+                                          behavior: HitTestBehavior.translucent,
                                           child: Container(
                                             padding: const EdgeInsets.symmetric(
                                               horizontal: 12,
@@ -206,30 +243,51 @@ class Step2Form extends ConsumerWidget {
                                                   ),
                                                 ),
                                                 const SizedBox(height: 8),
-                                                TextField(
-                                                  decoration:
-                                                      const InputDecoration(
-                                                        prefixText: '\$ ',
-                                                        hintText: '0.00',
-                                                        border:
-                                                            OutlineInputBorder(),
-                                                        contentPadding:
-                                                            EdgeInsets.symmetric(
-                                                              horizontal: 12,
-                                                              vertical: 8,
-                                                            ),
-                                                      ),
-                                                  keyboardType:
-                                                      const TextInputType.numberWithOptions(
-                                                        decimal: true,
-                                                      ),
-                                                  onChanged: (value) {
-                                                    controller
-                                                        .updateServicePrice(
-                                                          serviceId,
-                                                          value,
-                                                        );
+                                                Focus(
+                                                  onFocusChange: (hasFocus) {
+                                                    if (!hasFocus) {
+                                                      controller
+                                                          .setExpandingChip(
+                                                            null,
+                                                          );
+                                                    }
                                                   },
+                                                  child: TextField(
+                                                    focusNode: _getFocusNode(
+                                                      serviceId,
+                                                    ),
+                                                    decoration: const InputDecoration(
+                                                      prefixText: '\$ ',
+                                                      hintText: '0.00',
+                                                      border:
+                                                          OutlineInputBorder(),
+                                                      contentPadding:
+                                                          EdgeInsets.symmetric(
+                                                            horizontal: 12,
+                                                            vertical: 8,
+                                                          ),
+                                                    ),
+                                                    keyboardType:
+                                                        const TextInputType.numberWithOptions(
+                                                          decimal: true,
+                                                        ),
+                                                    onTapOutside: (_) {
+                                                      _getFocusNode(
+                                                        serviceId,
+                                                      ).unfocus();
+                                                      controller
+                                                          .setExpandingChip(
+                                                            null,
+                                                          );
+                                                    },
+                                                    onChanged: (value) {
+                                                      controller
+                                                          .updateServicePrice(
+                                                            serviceId,
+                                                            value,
+                                                          );
+                                                    },
+                                                  ),
                                                 ),
                                                 const SizedBox(height: 8),
                                                 Row(
@@ -239,7 +297,7 @@ class Step2Form extends ConsumerWidget {
                                                     TextButton(
                                                       onPressed: () =>
                                                           controller
-                                                              .setExpadingChip(
+                                                              .setExpandingChip(
                                                                 null,
                                                               ),
                                                       child: const Text(
@@ -247,10 +305,10 @@ class Step2Form extends ConsumerWidget {
                                                       ),
                                                     ),
                                                     const SizedBox(width: 8),
+
                                                     ElevatedButton(
                                                       onPressed: () {
-                                                        // Aquí capturaríamos el precio del TextField
-                                                        // Por simplicidad, usaremos un valor fijo para este ejemplo
+                                                        // Obtener el precio del estado actual
                                                         final priceString =
                                                             state
                                                                 .servicePrices[serviceId] ??
@@ -258,21 +316,32 @@ class Step2Form extends ConsumerWidget {
                                                         final price =
                                                             double.tryParse(
                                                               priceString,
-                                                            ) ??
-                                                            0;
+                                                            );
 
-                                                        if (price <= 0) {
+                                                        // Validación mejorada
+                                                        if (priceString
+                                                                .isEmpty ||
+                                                            price == null ||
+                                                            price <= 0) {
                                                           ScaffoldMessenger.of(
                                                             context,
                                                           ).showSnackBar(
                                                             const SnackBar(
                                                               content: Text(
-                                                                'Ingresa un precio válido',
+                                                                'Por favor, ingresa un precio válido mayor a 0',
                                                               ),
+                                                              duration:
+                                                                  Duration(
+                                                                    seconds: 2,
+                                                                  ),
+                                                              backgroundColor:
+                                                                  Colors.red,
                                                             ),
                                                           );
-                                                          return;
+                                                          return; // Importante: salir de la función si hay error
                                                         }
+
+                                                        // Si el precio es válido, agregar el servicio
                                                         controller
                                                             .addPopularService(
                                                               serviceId:
@@ -281,10 +350,36 @@ class Step2Form extends ConsumerWidget {
                                                                   serviceName,
                                                               price: price,
                                                             );
+
+                                                        // Cerrar el chip expandible
                                                         controller
-                                                            .setExpadingChip(
+                                                            .setExpandingChip(
                                                               null,
                                                             );
+
+                                                        // Limpiar el precio del servicio actual (opcional)
+                                                        controller
+                                                            .updateServicePrice(
+                                                              serviceId,
+                                                              '',
+                                                            );
+
+                                                        // Mostrar mensaje de éxito
+                                                        ScaffoldMessenger.of(
+                                                          context,
+                                                        ).showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(
+                                                              '$serviceName agregado correctamente',
+                                                            ),
+                                                            duration:
+                                                                const Duration(
+                                                                  seconds: 1,
+                                                                ),
+                                                            backgroundColor:
+                                                                Colors.green,
+                                                          ),
+                                                        );
                                                       },
                                                       child: const Text(
                                                         'Agregar',
@@ -487,7 +582,7 @@ class Step2Form extends ConsumerWidget {
                                         ),
                                       ),
                                       Text(
-                                        '\$ ${service.basePrice.toStringAsFixed(2)} desde',
+                                        'Desde \$${service.basePrice.toStringAsFixed(2)} ',
                                         style: TextStyle(
                                           color: Colors.green[700],
                                           fontWeight: FontWeight.w600,
@@ -554,9 +649,7 @@ class Step2Form extends ConsumerWidget {
                           contentPadding: const EdgeInsets.all(12),
                           counterText: '${state.description.length}/500',
                         ),
-                        controller: TextEditingController(
-                          text: state.description,
-                        ),
+                        onChanged: controller.updateDescription,
                       ),
                     ),
                   ],

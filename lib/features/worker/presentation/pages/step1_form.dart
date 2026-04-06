@@ -142,7 +142,7 @@ class Step1Form extends ConsumerWidget {
 
               //Dropdpown de profesiones
               servicesAsync.when(
-                data: (services) => DropdownButtonFormField<int>(
+                data: (services) => DropdownButtonFormField<String>(
                   decoration: const InputDecoration(
                     labelText: 'Profesión',
                     border: OutlineInputBorder(),
@@ -153,7 +153,7 @@ class Step1Form extends ConsumerWidget {
                       ? state.selectedServiceId
                       : null,
                   items: services.map((service) {
-                    return DropdownMenuItem<int>(
+                    return DropdownMenuItem<String>(
                       value: service.id,
                       child: Text(service.name),
                     );

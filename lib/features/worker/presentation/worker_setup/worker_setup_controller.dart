@@ -55,7 +55,7 @@ class WorkerSetupController extends _$WorkerSetupController {
     required String firstName,
     required String lastName,
     required String nationalId,
-    required int? serviceId,
+    required String? serviceId,
     required String phone,
   }) {
     if (firstName.isEmpty) return 'Ingresa tus nombres';
@@ -89,7 +89,7 @@ class WorkerSetupController extends _$WorkerSetupController {
     state = state.copyWith(phone: filtered);
   }
 
-  void updateService({int? id, String? name}) {
+  void updateService({String? id, String? name}) {
     state = state.copyWith(
       selectedServiceId: id,
       primaryServiceName: name,
@@ -117,13 +117,17 @@ class WorkerSetupController extends _$WorkerSetupController {
 
   //control de chip expandibles
 
-  void setExpadingChip(String? chipId) {
-    state = state.copyWith(expandingChipId: chipId);
+  void setExpandingChip(String? chipId) {
+    if (chipId == null) {
+      state = state.copyWith(clearExpandingChipId: true);
+    } else {
+      state = state.copyWith(expandingChipId: chipId);
+    }
   }
 
   //Agregar servicio popular con precio
   void addPopularService({
-    required int serviceId,
+    required String serviceId,
     required String serviceName,
     required double price,
   }) {
@@ -155,7 +159,7 @@ class WorkerSetupController extends _$WorkerSetupController {
 
     state = state.copyWith(
       additionalServices: updatedServices,
-      expandingChipId: null,
+      clearExpandingChipId: true,
     );
   }
 
@@ -533,12 +537,12 @@ class WorkerSetupController extends _$WorkerSetupController {
     return _supabase.storage.from('work_photos').getPublicUrl(storagePath);
   }
 
-  void updateServicePrice(int serviceId, String value) {
+  void updateServicePrice(String serviceId, String value) {
     final filtered = value.replaceAll(RegExp(r'[^\d.]'), '');
 
     if (filtered.split('.').length > 2) return;
 
-    final updated = Map<int, String>.from(state.servicePrices);
+    final updated = Map<String, String>.from(state.servicePrices);
     updated[serviceId] = filtered;
     state = state.copyWith(servicePrices: updated);
   }
