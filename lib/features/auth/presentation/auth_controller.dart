@@ -2,12 +2,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jobsy/features/auth/auth_providers.dart';
 import '../data/auth_repository.dart';
 
+class LoginResult {
+  final String role;
+  final bool hasWorkerProfile;
+
+  LoginResult({required this.role, required this.hasWorkerProfile});
+}
+
 class AuthController extends StateNotifier<bool> {
   final AuthRepository _repository;
 
   AuthController(this._repository) : super(false);
 
-  Future<void> login(String email, String password) async {
+  Future<LoginResult> login(String email, String password) async {
     state = true;
     try {
       final response = await _repository.login(
@@ -23,8 +30,8 @@ class AuthController extends StateNotifier<bool> {
       }
 
       //Obtener el role desde metadata
-      final role = user.userMetadata?['role'];
-      if (role == null) {
+      String role = user.userMetadata?['role']?.toString() ?? 'worker';
+      if (role.isEmpty) {
         throw Exception("No se encontro el rol del usuario.");
       }
 
@@ -32,7 +39,14 @@ class AuthController extends StateNotifier<bool> {
       if (profile == null) {
         await _repository.createProfile(id: user.id, role: role);
       }
-      return role;
+
+      // Verificar si el worker tiene perfil completo
+      bool hasWorkerProfile = false;
+      if (role == 'worker') {
+        hasWorkerProfile = await _repository.hasWorkerProfile(user.id);
+      }
+
+      return LoginResult(role: role, hasWorkerProfile: hasWorkerProfile);
     } finally {
       state = false;
     }

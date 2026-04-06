@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jobsy/core/widgets/top_background_layout.dart';
+import 'package:jobsy/features/worker/presentation/pages/step3_form.dart';
 import '../worker_setup/worker_setup_controller.dart';
 import '../worker_setup/services_provider.dart';
 import '../worker_setup/widgets/photo_slot.dart';
@@ -13,20 +14,6 @@ class Step2Form extends ConsumerStatefulWidget {
 }
 
 class _Step2FormState extends ConsumerState<Step2Form> {
-  final Map<String, FocusNode> _focusNodes = {};
-
-  @override
-  void dispose() {
-    for (final node in _focusNodes.values) {
-      node.dispose();
-    }
-    super.dispose();
-  }
-
-  FocusNode _getFocusNode(String serviceId) {
-    return _focusNodes.putIfAbsent(serviceId, () => FocusNode());
-  }
-
   @override
   Widget build(BuildContext context) {
     final controller = ref.read(workerSetupControllerProvider.notifier);
@@ -37,9 +24,6 @@ class _Step2FormState extends ConsumerState<Step2Form> {
       title: 'Configuración del trabajador',
       child: GestureDetector(
         onTap: () {
-          for (final node in _focusNodes.values) {
-            node.unfocus();
-          }
           controller.setExpandingChip(null);
         },
         behavior: HitTestBehavior.translucent,
@@ -154,24 +138,11 @@ class _Step2FormState extends ConsumerState<Step2Form> {
                                         // Chip
                                         GestureDetector(
                                           onTap: () {
-                                            if (isExpanding) {
-                                              _getFocusNode(
-                                                serviceId,
-                                              ).unfocus();
-                                              controller.setExpandingChip(null);
-                                            } else {
-                                              controller.setExpandingChip(
-                                                serviceId.toString(),
-                                              );
-                                              Future.delayed(
-                                                const Duration(
-                                                  milliseconds: 100,
-                                                ),
-                                                () => _getFocusNode(
-                                                  serviceId,
-                                                ).requestFocus(),
-                                              );
-                                            }
+                                            controller.setExpandingChip(
+                                              isExpanding
+                                                  ? null
+                                                  : serviceId.toString(),
+                                            );
                                           },
                                           behavior: HitTestBehavior.translucent,
                                           child: Container(
@@ -205,57 +176,48 @@ class _Step2FormState extends ConsumerState<Step2Form> {
                                         // Expandible con precio
                                         if (isExpanding) ...[
                                           const SizedBox(height: 8),
-                                          Container(
-                                            width: 250,
-                                            padding: const EdgeInsets.all(12),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                              border: Border.all(
-                                                color: Colors.blue,
+                                          GestureDetector(
+                                            behavior: HitTestBehavior.opaque,
+                                            onTap: () {},
+                                            child: Container(
+                                              width: 250,
+                                              padding: const EdgeInsets.all(12),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                border: Border.all(
+                                                  color: Colors.blue,
+                                                ),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.grey
+                                                        .withValues(alpha: 0.1),
+                                                    spreadRadius: 1,
+                                                    blurRadius: 4,
+                                                  ),
+                                                ],
                                               ),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.grey.withValues(
-                                                    alpha: 0.1,
-                                                  ),
-                                                  spreadRadius: 1,
-                                                  blurRadius: 4,
-                                                ),
-                                              ],
-                                            ),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  serviceName,
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 12),
-                                                const Text(
-                                                  '¿Cuánto cobras por este servicio?',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 8),
-                                                Focus(
-                                                  onFocusChange: (hasFocus) {
-                                                    if (!hasFocus) {
-                                                      controller
-                                                          .setExpandingChip(
-                                                            null,
-                                                          );
-                                                    }
-                                                  },
-                                                  child: TextField(
-                                                    focusNode: _getFocusNode(
-                                                      serviceId,
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    serviceName,
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
                                                     ),
+                                                  ),
+                                                  const SizedBox(height: 12),
+                                                  const Text(
+                                                    '¿Cuánto cobras por este servicio?',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 8),
+                                                  TextField(
                                                     decoration: const InputDecoration(
                                                       prefixText: '\$ ',
                                                       hintText: '0.00',
@@ -271,15 +233,6 @@ class _Step2FormState extends ConsumerState<Step2Form> {
                                                         const TextInputType.numberWithOptions(
                                                           decimal: true,
                                                         ),
-                                                    onTapOutside: (_) {
-                                                      _getFocusNode(
-                                                        serviceId,
-                                                      ).unfocus();
-                                                      controller
-                                                          .setExpandingChip(
-                                                            null,
-                                                          );
-                                                    },
                                                     onChanged: (value) {
                                                       controller
                                                           .updateServicePrice(
@@ -288,106 +241,107 @@ class _Step2FormState extends ConsumerState<Step2Form> {
                                                           );
                                                     },
                                                   ),
-                                                ),
-                                                const SizedBox(height: 8),
-                                                Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.end,
-                                                  children: [
-                                                    TextButton(
-                                                      onPressed: () =>
+                                                  const SizedBox(height: 8),
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.end,
+                                                    children: [
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            controller
+                                                                .setExpandingChip(
+                                                                  null,
+                                                                ),
+                                                        child: const Text(
+                                                          'Cancelar',
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 8),
+
+                                                      ElevatedButton(
+                                                        onPressed: () {
+                                                          // Obtener el precio del estado actual
+                                                          final priceString =
+                                                              state
+                                                                  .servicePrices[serviceId] ??
+                                                              '';
+                                                          final price =
+                                                              double.tryParse(
+                                                                priceString,
+                                                              );
+
+                                                          // Validación mejorada
+                                                          if (priceString
+                                                                  .isEmpty ||
+                                                              price == null ||
+                                                              price <= 0) {
+                                                            ScaffoldMessenger.of(
+                                                              context,
+                                                            ).showSnackBar(
+                                                              const SnackBar(
+                                                                content: Text(
+                                                                  'Por favor, ingresa un precio válido mayor a 0',
+                                                                ),
+                                                                duration:
+                                                                    Duration(
+                                                                      seconds:
+                                                                          2,
+                                                                    ),
+                                                                backgroundColor:
+                                                                    Colors.red,
+                                                              ),
+                                                            );
+                                                            return; // Importante: salir de la función si hay error
+                                                          }
+
+                                                          // Si el precio es válido, agregar el servicio
+                                                          controller
+                                                              .addPopularService(
+                                                                serviceId:
+                                                                    serviceId,
+                                                                serviceName:
+                                                                    serviceName,
+                                                                price: price,
+                                                              );
+
+                                                          // Cerrar el chip expandible
                                                           controller
                                                               .setExpandingChip(
                                                                 null,
-                                                              ),
-                                                      child: const Text(
-                                                        'Cancelar',
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 8),
+                                                              );
 
-                                                    ElevatedButton(
-                                                      onPressed: () {
-                                                        // Obtener el precio del estado actual
-                                                        final priceString =
-                                                            state
-                                                                .servicePrices[serviceId] ??
-                                                            '';
-                                                        final price =
-                                                            double.tryParse(
-                                                              priceString,
-                                                            );
+                                                          // Limpiar el precio del servicio actual (opcional)
+                                                          controller
+                                                              .updateServicePrice(
+                                                                serviceId,
+                                                                '',
+                                                              );
 
-                                                        // Validación mejorada
-                                                        if (priceString
-                                                                .isEmpty ||
-                                                            price == null ||
-                                                            price <= 0) {
+                                                          // Mostrar mensaje de éxito
                                                           ScaffoldMessenger.of(
                                                             context,
                                                           ).showSnackBar(
-                                                            const SnackBar(
+                                                            SnackBar(
                                                               content: Text(
-                                                                'Por favor, ingresa un precio válido mayor a 0',
+                                                                '$serviceName agregado correctamente',
                                                               ),
                                                               duration:
-                                                                  Duration(
-                                                                    seconds: 2,
+                                                                  const Duration(
+                                                                    seconds: 1,
                                                                   ),
                                                               backgroundColor:
-                                                                  Colors.red,
+                                                                  Colors.green,
                                                             ),
                                                           );
-                                                          return; // Importante: salir de la función si hay error
-                                                        }
-
-                                                        // Si el precio es válido, agregar el servicio
-                                                        controller
-                                                            .addPopularService(
-                                                              serviceId:
-                                                                  serviceId,
-                                                              serviceName:
-                                                                  serviceName,
-                                                              price: price,
-                                                            );
-
-                                                        // Cerrar el chip expandible
-                                                        controller
-                                                            .setExpandingChip(
-                                                              null,
-                                                            );
-
-                                                        // Limpiar el precio del servicio actual (opcional)
-                                                        controller
-                                                            .updateServicePrice(
-                                                              serviceId,
-                                                              '',
-                                                            );
-
-                                                        // Mostrar mensaje de éxito
-                                                        ScaffoldMessenger.of(
-                                                          context,
-                                                        ).showSnackBar(
-                                                          SnackBar(
-                                                            content: Text(
-                                                              '$serviceName agregado correctamente',
-                                                            ),
-                                                            duration:
-                                                                const Duration(
-                                                                  seconds: 1,
-                                                                ),
-                                                            backgroundColor:
-                                                                Colors.green,
-                                                          ),
-                                                        );
-                                                      },
-                                                      child: const Text(
-                                                        'Agregar',
+                                                        },
+                                                        child: const Text(
+                                                          'Agregar',
+                                                        ),
                                                       ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           ),
                                           const SizedBox(height: 8),
@@ -534,8 +488,27 @@ class _Step2FormState extends ConsumerState<Step2Form> {
                                   ),
                                   const SizedBox(width: 8),
                                   ElevatedButton(
-                                    onPressed: () =>
-                                        controller.addCustomService(),
+                                    onPressed: () {
+                                      final serviceName =
+                                          state.customServiceName;
+                                      controller.addCustomService();
+                                      if (serviceName != null &&
+                                          serviceName.isNotEmpty) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              '$serviceName agregado correctamente',
+                                            ),
+                                            duration: const Duration(
+                                              seconds: 1,
+                                            ),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                      }
+                                    },
                                     child: const Text('Guardar'),
                                   ),
                                 ],
@@ -712,7 +685,14 @@ class _Step2FormState extends ConsumerState<Step2Form> {
                               return;
                             }
                             final success = await controller.goToNextStep();
-                            if (!success && context.mounted) {
+                            if (success && context.mounted) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const Step3Form(),
+                                ),
+                              );
+                            } else if (!success && context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(

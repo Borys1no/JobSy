@@ -229,7 +229,7 @@ class Step3Form extends ConsumerWidget {
 
                           final success = await controller.saveWorkerProfile();
 
-                          if (context.mounted) {
+                          if (success && context.mounted) {
                             Navigator.pushReplacement(
                               context,
                               PageRouteBuilder(
@@ -243,7 +243,6 @@ class Step3Form extends ConsumerWidget {
                                 },
                               ),
                             );
-                            // Navigator.pushReplacement...
                           } else if (!success && context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(

@@ -42,4 +42,13 @@ class AuthRepository {
   Future<void> createProfile({required String id, required String role}) async {
     await _client.from('profiles').insert({'id': id, 'role': role});
   }
+
+  Future<bool> hasWorkerProfile(String userId) async {
+    final response = await _client
+        .from('worker_profiles')
+        .select()
+        .eq('user_id', userId)
+        .maybeSingle();
+    return response != null;
+  }
 }

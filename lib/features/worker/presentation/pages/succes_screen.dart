@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:jobsy/features/worker/presentation/pages/home_screen.dart';
+import 'package:jobsy/features/worker/presentation/pages/worker_home_page.dart';
 
 class SuccessScreen extends StatefulWidget {
   const SuccessScreen({super.key});
@@ -78,7 +78,7 @@ class _SuccessScreenState extends State<SuccessScreen>
                   onPressed: () {
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (_) => const HomeScreen()),
+                      MaterialPageRoute(builder: (_) => const WorkerHomePage()),
                       (route) => false,
                     );
                   },

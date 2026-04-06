@@ -21,8 +21,6 @@ class WorkerSetupController extends _$WorkerSetupController {
 
   SupabaseClient get _supabase => ref.read(supabaseClientProvider);
 
-  // ✅ TODOS LOS MÉTODOS DENTRO DE LA CLASE
-
   // Validación de cédula
   bool _validateEcuadorianId(String id) {
     if (id.length != 10) return false;
@@ -393,7 +391,10 @@ class WorkerSetupController extends _$WorkerSetupController {
 
     try {
       final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) throw Exception('Usuario no autenticado');
+      if (userId == null) {
+        throw Exception('Usuario no autenticado');
+      }
+      print('DEBUG: UserID = $userId');
 
       // =========================
       // 1. SUBIR AVATAR
@@ -401,6 +402,7 @@ class WorkerSetupController extends _$WorkerSetupController {
       String? avatarUrl;
 
       if (state.avatarPath != null) {
+        print('DEBUG: Subiendo avatar desde ${state.avatarPath}');
         final avatarFile = File(state.avatarPath!);
         final avatarExt = state.avatarPath!.split('.').last;
         final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -418,28 +420,34 @@ class WorkerSetupController extends _$WorkerSetupController {
         avatarUrl = _supabase.storage
             .from('profiles')
             .getPublicUrl(storagePath);
+        print('DEBUG: Avatar URL = $avatarUrl');
       }
 
       // =========================
-      // 2. SUBIR FOTOS EN PARALELO 🚀
+      // 2. SUBIR FOTOS EN PARALELO
       // =========================
       final uploadFutures = <Future<String>>[];
 
       for (var i = 0; i < state.workPhotos.length; i++) {
         final path = state.workPhotos[i];
-
         if (path != null) {
+          print('DEBUG: Agregando foto $i: $path');
           uploadFutures.add(_uploadWorkPhoto(path, userId, i));
         }
       }
 
-      final workPhotoUrls = await Future.wait(uploadFutures);
+      List<String> workPhotoUrls = [];
+      if (uploadFutures.isNotEmpty) {
+        workPhotoUrls = await Future.wait(uploadFutures);
+        print('DEBUG: Fotos subidas: $workPhotoUrls');
+      }
 
       // =========================
-      // 3. GUARDAR DATOS (ORDEN SEGURO)
+      // 3. GUARDAR DATOS
       // =========================
 
       // profiles
+      print('DEBUG: Guardando en profiles...');
       await _supabase.from('profiles').upsert({
         'id': userId,
         'first_name': state.firstName,
@@ -450,6 +458,7 @@ class WorkerSetupController extends _$WorkerSetupController {
       });
 
       // identidad
+      print('DEBUG: Guardando en user_identity...');
       await _supabase.from('user_identity').upsert({
         'user_id': userId,
         'national_id': state.nationalId,
@@ -457,6 +466,7 @@ class WorkerSetupController extends _$WorkerSetupController {
       });
 
       // worker profile
+      print('DEBUG: Guardando en worker_profiles...');
       await _supabase.from('worker_profiles').upsert({
         'user_id': userId,
         'bio': state.description,
@@ -466,13 +476,16 @@ class WorkerSetupController extends _$WorkerSetupController {
         'longitude': state.longitude,
         'available_days': state.availableDaysAsInt,
         'available_emergency': state.availableEmergency,
-        'work_photos': workPhotoUrls, // 🔥 guardas URLs directamente
+        'work_photos': workPhotoUrls,
       });
 
       // =========================
       // 4. SERVICIO PRINCIPAL
       // =========================
       if (state.selectedServiceId != null) {
+        print(
+          'DEBUG: Guardando servicio principal: ${state.selectedServiceId}',
+        );
         await _supabase.from('worker_services').upsert({
           'worker_id': userId,
           'service_id': state.selectedServiceId,
@@ -484,8 +497,10 @@ class WorkerSetupController extends _$WorkerSetupController {
       // =========================
       // 5. SERVICIOS ADICIONALES
       // =========================
+      print('DEBUG: Servicios adicionales: ${state.additionalServices.length}');
       for (final service in state.additionalServices) {
         if (service.serviceId != null) {
+          print('DEBUG: Agregando servicio adicional: ${service.name}');
           await _supabase.from('worker_services').insert({
             'worker_id': userId,
             'service_id': service.serviceId,
@@ -493,6 +508,7 @@ class WorkerSetupController extends _$WorkerSetupController {
             'base_price': service.basePrice,
           });
         } else {
+          print('DEBUG: Creando servicio personalizado: ${service.name}');
           final newService = await _supabase
               .from('services')
               .insert({'name': service.name})
@@ -508,9 +524,12 @@ class WorkerSetupController extends _$WorkerSetupController {
         }
       }
 
+      print('DEBUG: Perfil guardado exitosamente!');
       state = state.copyWith(isLoading: false);
       return true;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('DEBUG ERROR: $e');
+      print('DEBUG STACK: $stackTrace');
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Error al guardar: $e',
