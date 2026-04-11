@@ -7,7 +7,7 @@ part of 'worker_home_controller.dart';
 // **************************************************************************
 
 String _$workerHomeControllerHash() =>
-    r'3ac277d9bc0d4a235645db8053ffcc24318dee10';
+    r'42a8817c148c35b5127f1a1138e16427c33da79e';
 
 /// See also [WorkerHomeController].
 @ProviderFor(WorkerHomeController)

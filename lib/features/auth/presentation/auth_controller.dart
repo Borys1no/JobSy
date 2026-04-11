@@ -22,6 +22,8 @@ class AuthController extends StateNotifier<bool> {
         password: password,
       );
       final user = response.user;
+      print('DEBUG LOGIN USER : $user');
+
       if (user == null) {
         throw Exception("Error en login");
       }
@@ -31,22 +33,33 @@ class AuthController extends StateNotifier<bool> {
 
       //Obtener el role desde metadata
       String role = user.userMetadata?['role']?.toString() ?? 'worker';
+      print('DEBUG ROLE : $role');
+
       if (role.isEmpty) {
         throw Exception("No se encontro el rol del usuario.");
       }
 
       final profile = await _repository.getProfile(user.id);
+      print('DEBUG PROFILE : $profile');
+
       if (profile == null) {
+        print('DEBUG: creando profile...');
         await _repository.createProfile(id: user.id, role: role);
       }
 
       // Verificar si el worker tiene perfil completo
       bool hasWorkerProfile = false;
       if (role == 'worker') {
+        print('DEBUG: verificando worker_profile');
         hasWorkerProfile = await _repository.hasWorkerProfile(user.id);
+        print('DEBUG hasWorkerProfile : $hasWorkerProfile');
       }
 
       return LoginResult(role: role, hasWorkerProfile: hasWorkerProfile);
+    } catch (e, stack) {
+      print('Error login: $e');
+      print(stack);
+      rethrow;
     } finally {
       state = false;
     }

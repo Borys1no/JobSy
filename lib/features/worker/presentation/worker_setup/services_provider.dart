@@ -1,5 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../../../core/config/supabase_client.dart';
+import '../../../auth/auth_providers.dart';
 import '../../domain/service_model.dart';
 import 'package:riverpod/riverpod.dart';
 import '../../domain/task_model.dart';
@@ -8,7 +8,7 @@ part 'services_provider.g.dart';
 
 @riverpod
 Future<List<ServiceModel>> popularServices(PopularServicesRef ref) async {
-  final supabase = ref.read(supabaseClientProvider);
+  final supabase = ref.read(supabaseProvider);
   try {
     final response = await supabase
         .from('services')
@@ -24,7 +24,7 @@ Future<List<ServiceModel>> popularServices(PopularServicesRef ref) async {
 @riverpod
 Future<List<ServiceModel>> allServices(AllServicesRef ref) async {
   ref.keepAlive();
-  final supabase = ref.read(supabaseClientProvider);
+  final supabase = ref.read(supabaseProvider);
 
   try {
     final response = await supabase
@@ -40,7 +40,7 @@ Future<List<ServiceModel>> allServices(AllServicesRef ref) async {
 
 @riverpod
 Future<List<TaskModel>> tasksList(TasksListRef ref) async {
-  final supabase = ref.read(supabaseClientProvider);
+  final supabase = ref.read(supabaseProvider);
   try {
     final response = await supabase
         .from('tasks')

@@ -11,7 +11,10 @@ class WorkerHomeState {
   final int reviewCount;
   final String? description;
   final List<String> skills;
-  final List<String> workPhotos;
+  final List<AdditionalJob> additionalJobs; // De worker_tasks
+  final List<AdditionalJob> customServices; // De custom_services
+  final List<TaskItem> availableTasks;
+  final List<WorkPhoto> workPhotos;
   final int completedJobs;
   final List<bool> availableDays;
   final List<ActiveJob> activeJobs;
@@ -27,6 +30,9 @@ class WorkerHomeState {
     required this.reviewCount,
     this.description,
     required this.skills,
+    required this.additionalJobs,
+    required this.customServices,
+    required this.availableTasks,
     required this.workPhotos,
     required this.completedJobs,
     required this.availableDays,
@@ -44,6 +50,9 @@ class WorkerHomeState {
     reviewCount: 0,
     description: null,
     skills: const [],
+    additionalJobs: const [],
+    customServices: const [],
+    availableTasks: const [],
     workPhotos: const [],
     completedJobs: 0,
     availableDays: const [false, false, false, false, false, false, false],
@@ -61,7 +70,10 @@ class WorkerHomeState {
     int? reviewCount,
     String? description,
     List<String>? skills,
-    List<String>? workPhotos,
+    List<AdditionalJob>? additionalJobs,
+    List<AdditionalJob>? customServices,
+    List<TaskItem>? availableTasks,
+    List<WorkPhoto>? workPhotos,
     int? completedJobs,
     List<bool>? availableDays,
     List<ActiveJob>? activeJobs,
@@ -77,6 +89,9 @@ class WorkerHomeState {
       reviewCount: reviewCount ?? this.reviewCount,
       description: description ?? this.description,
       skills: skills ?? this.skills,
+      additionalJobs: additionalJobs ?? this.additionalJobs,
+      customServices: customServices ?? this.customServices,
+      availableTasks: availableTasks ?? this.availableTasks,
       workPhotos: workPhotos ?? this.workPhotos,
       completedJobs: completedJobs ?? this.completedJobs,
       availableDays: availableDays ?? this.availableDays,
@@ -84,4 +99,32 @@ class WorkerHomeState {
       reviews: reviews ?? this.reviews,
     );
   }
+}
+
+class TaskItem {
+  final String id;
+  final String name;
+
+  TaskItem({required this.id, required this.name});
+}
+
+class AdditionalJob {
+  final String name;
+  final double? basePrice;
+
+  AdditionalJob({required this.name, this.basePrice});
+}
+
+class ServiceItem {
+  final String id;
+  final String name;
+
+  ServiceItem({required this.id, required this.name});
+}
+
+class WorkPhoto {
+  final String url;
+  final String? id;
+
+  WorkPhoto({required this.url, this.id});
 }

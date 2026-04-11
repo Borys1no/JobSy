@@ -6,11 +6,16 @@ import 'package:jobsy/core/theme/app_theme.dart';
 import 'package:jobsy/features/worker/domain/worker_home_state.dart';
 import 'package:jobsy/features/worker/presentation/worker_home/worker_home_controller.dart';
 
-class WorkerHomePage extends ConsumerWidget {
+class WorkerHomePage extends ConsumerStatefulWidget {
   const WorkerHomePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WorkerHomePage> createState() => _WorkerHomePageState();
+}
+
+class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(workerHomeControllerProvider);
     final controller = ref.read(workerHomeControllerProvider.notifier);
 
@@ -60,7 +65,7 @@ class WorkerHomePage extends ConsumerWidget {
             _buildSectionTitle('Descripción'),
             _buildDescriptionSection(state),
             _buildSectionTitle('Habilidades'),
-            _buildSkillsSection(state),
+            _buildSkillsSection(state, controller),
             _buildSectionTitle('Trabajos en marcha'),
             _buildActiveJobsSection(state),
             _buildSectionTitle('Mis trabajos'),
@@ -110,17 +115,22 @@ class WorkerHomePage extends ConsumerWidget {
         children: [
           Stack(
             children: [
-              CircleAvatar(
-                radius: 45,
-                backgroundColor: Colors.grey[200],
-                backgroundImage: state.avatarPath != null
-                    ? FileImage(File(state.avatarPath!)) as ImageProvider
-                    : state.avatarUrl != null
-                    ? NetworkImage(state.avatarUrl!) as ImageProvider
+              GestureDetector(
+                onTap: state.avatarUrl != null
+                    ? () => _showFullscreenImage(context, state.avatarUrl!)
                     : null,
-                child: state.avatarPath == null && state.avatarUrl == null
-                    ? const Icon(Icons.person, size: 45, color: Colors.grey)
-                    : null,
+                child: CircleAvatar(
+                  radius: 45,
+                  backgroundColor: Colors.grey[200],
+                  backgroundImage: state.avatarPath != null
+                      ? FileImage(File(state.avatarPath!)) as ImageProvider
+                      : state.avatarUrl != null
+                      ? NetworkImage(state.avatarUrl!) as ImageProvider
+                      : null,
+                  child: state.avatarPath == null && state.avatarUrl == null
+                      ? const Icon(Icons.person, size: 45, color: Colors.grey)
+                      : null,
+                ),
               ),
               Positioned(
                 bottom: 0,
@@ -203,31 +213,329 @@ class WorkerHomePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildSkillsSection(WorkerHomeState state) {
+  Widget _buildSkillsSection(
+    WorkerHomeState state,
+    WorkerHomeController controller,
+  ) {
+    final allJobNames = [
+      ...state.additionalJobs.map((j) => j.name),
+      ...state.customServices.map((j) => j.name),
+    ];
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: state.skills.map((skill) {
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppTheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: AppTheme.primary.withValues(alpha: 0.3),
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (state.additionalJobs.isNotEmpty ||
+              state.customServices.isNotEmpty) ...[
+            const Text(
+              'Tus trabajos adicionales:',
+              style: TextStyle(fontWeight: FontWeight.w500),
             ),
-            child: Text(
-              skill,
-              style: const TextStyle(
-                color: AppTheme.primary,
+            const SizedBox(height: 12),
+            ...state.additionalJobs.asMap().entries.map((entry) {
+              final index = entry.key;
+              final job = entry.value;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            job.name,
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                          if (job.basePrice != null)
+                            Text(
+                              'Desde \$${job.basePrice!.toStringAsFixed(0)}',
+                              style: TextStyle(
+                                color: Colors.green[700],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: () => controller.removeTask(index, job.name),
+                    ),
+                  ],
+                ),
+              );
+            }),
+            ...state.customServices.asMap().entries.map((entry) {
+              final index = entry.key;
+              final job = entry.value;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue[200]!),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            job.name,
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                          if (job.basePrice != null)
+                            Text(
+                              'Desde \$${job.basePrice!.toStringAsFixed(0)}',
+                              style: TextStyle(
+                                color: Colors.green[700],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: () =>
+                          controller.removeCustomService(index, job.name),
+                    ),
+                  ],
+                ),
+              );
+            }),
+            const SizedBox(height: 16),
+          ],
+          if (state.availableTasks.isNotEmpty) ...[
+            const Text(
+              'Agregar trabajo adicional',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey,
                 fontWeight: FontWeight.w500,
               ),
             ),
-          );
-        }).toList(),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: state.availableTasks
+                  .where((t) => !allJobNames.contains(t.name))
+                  .map((task) {
+                    return GestureDetector(
+                      onTap: () => _showAddPriceDialog(
+                        context,
+                        controller,
+                        task.id,
+                        task.name,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.grey[300]!),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.add, size: 16, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Text(
+                              task.name,
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  })
+                  .toList(),
+            ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () => _showCustomServiceDialog(context, controller),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue[200]!),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.add, color: Colors.blue[700], size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Agregar otro servicio personalizado',
+                      style: TextStyle(
+                        color: Colors.blue[700],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _showAddPriceDialog(
+    BuildContext context,
+    WorkerHomeController controller,
+    String taskId,
+    String taskName,
+  ) {
+    final priceController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Agregar $taskName'),
+        content: TextField(
+          controller: priceController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(
+            labelText: 'Precio base (\$)',
+            hintText: 'Ej: 25',
+            prefixText: '\$ ',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final price = double.tryParse(priceController.text);
+              controller.addTask(taskId, taskName, price);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('$taskName agregado correctamente'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            },
+            child: const Text('Agregar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCustomServiceDialog(
+    BuildContext context,
+    WorkerHomeController controller,
+  ) {
+    final nameController = TextEditingController();
+    final priceController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Nuevo servicio personalizado'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'Nombre del servicio',
+                hintText: 'Ej: Cerrajería',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: priceController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Precio base (\$)',
+                hintText: 'Ej: 30',
+                prefixText: '\$ ',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final name = nameController.text.trim();
+              final price = double.tryParse(priceController.text);
+              if (name.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Ingresa el nombre del servicio'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+              await controller.addCustomService(name, price);
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('$name agregado correctamente'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            },
+            child: const Text('Agregar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFullscreenImage(BuildContext context, String imageUrl) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            iconTheme: const IconThemeData(color: Colors.white),
+          ),
+          body: Center(
+            child: InteractiveViewer(
+              child: Image.network(imageUrl, fit: BoxFit.contain),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -369,34 +677,47 @@ class WorkerHomePage extends ConsumerWidget {
             itemCount: state.workPhotos.length,
             controller: PageController(viewportFraction: 0.85),
             itemBuilder: (context, index) {
-              return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  image: DecorationImage(
-                    image: NetworkImage(state.workPhotos[index]),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                child: Align(
-                  alignment: Alignment.topRight,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildPhotoButton(
-                          Icons.edit,
-                          () => _showPhotoOptions(context, index, controller),
+              final photo = state.workPhotos[index];
+              return GestureDetector(
+                onTap: () => _showFullscreenImage(context, photo.url),
+                child: Stack(
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        image: DecorationImage(
+                          image: NetworkImage(photo.url),
+                          fit: BoxFit.cover,
                         ),
-                        const SizedBox(width: 4),
-                        _buildPhotoButton(
-                          Icons.delete,
-                          () => _confirmDeletePhoto(context, index, controller),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildPhotoButton(
+                              Icons.edit,
+                              () =>
+                                  _showPhotoOptions(context, index, controller),
+                            ),
+                            const SizedBox(width: 4),
+                            _buildPhotoButton(
+                              Icons.delete,
+                              () => _confirmDeletePhoto(
+                                context,
+                                index,
+                                controller,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               );
             },

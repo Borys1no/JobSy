@@ -2,9 +2,8 @@ import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../../core/config/supabase_client.dart';
+import '../../../../features/auth/auth_providers.dart';
 import '../../domain/worker_setup_state.dart';
-import 'package:riverpod/riverpod.dart';
 
 part 'worker_setup_controller.g.dart';
 
@@ -19,7 +18,7 @@ class WorkerSetupController extends _$WorkerSetupController {
     return const WorkerSetupState();
   }
 
-  SupabaseClient get _supabase => ref.read(supabaseClientProvider);
+  SupabaseClient get _supabase => ref.read(supabaseProvider);
 
   // Validación de cédula
   bool _validateEcuadorianId(String id) {
@@ -474,7 +473,8 @@ class WorkerSetupController extends _$WorkerSetupController {
         'address': state.address,
         'latitude': state.latitude,
         'longitude': state.longitude,
-        'available_days': state.availableDaysAsInt,
+        'available_days':
+            '{${[1, 2, 3, 4, 5, 6, 7].map((d) => state.availableDaysAsInt.contains(d) ? 'true' : 'false').join(',')}}',
         'available_emergency': state.availableEmergency,
         'work_photos': workPhotoUrls,
       });
@@ -495,30 +495,24 @@ class WorkerSetupController extends _$WorkerSetupController {
       }
 
       // =========================
-      // 5. SERVICIOS ADICIONALES
+      // 5. SERVICIOS ADICIONALES (TASKS)
       // =========================
       print('DEBUG: Servicios adicionales: ${state.additionalServices.length}');
       for (final service in state.additionalServices) {
-        if (service.serviceId != null) {
-          print('DEBUG: Agregando servicio adicional: ${service.name}');
-          await _supabase.from('worker_services').insert({
+        if (service.isCustom) {
+          // Servicio personalizado - guardar en custom_services
+          print('DEBUG: Creando servicio personalizado: ${service.name}');
+          await _supabase.from('custom_services').insert({
             'worker_id': userId,
-            'service_id': service.serviceId,
-            'service_type': 'secondary',
+            'name': service.name,
             'base_price': service.basePrice,
           });
         } else {
-          print('DEBUG: Creando servicio personalizado: ${service.name}');
-          final newService = await _supabase
-              .from('services')
-              .insert({'name': service.name})
-              .select('id')
-              .single();
-
-          await _supabase.from('worker_services').insert({
+          // Task de la lista - guardar en worker_tasks
+          print('DEBUG: Guardando task adicional: ${service.name}');
+          await _supabase.from('worker_tasks').insert({
             'worker_id': userId,
-            'service_id': newService['id'],
-            'service_type': 'secondary',
+            'task_id': service.serviceId, // UUID del task
             'base_price': service.basePrice,
           });
         }
