@@ -2,47 +2,48 @@ import 'package:flutter/material.dart';
 import 'package:jobsy/core/theme/app_theme.dart';
 import 'package:jobsy/core/widgets/blob_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:jobsy/features/worker/presentation/pages/complete_profile_page.dart';
+import 'package:jobsy/features/client/presentation/pages/client_home_page.dart';
 import 'package:jobsy/core/constants/app_constants.dart';
 import 'package:jobsy/core/widgets/top_background_layout.dart';
 
-class WorkerOnboardingPage extends StatefulWidget {
-  const WorkerOnboardingPage({super.key});
+class ClientOnboardingPage extends StatefulWidget {
+  const ClientOnboardingPage({super.key});
 
   @override
-  State<WorkerOnboardingPage> createState() => _WorkerOnboardingPageState();
+  State<ClientOnboardingPage> createState() => _ClientOnboardingPageState();
 }
 
-class _WorkerOnboardingPageState extends State<WorkerOnboardingPage> {
+class _ClientOnboardingPageState extends State<ClientOnboardingPage> {
   final PageController _controller = PageController();
   int currentIndex = 0;
 
   final List<Map<String, String>> pages = [
     {
-      "title": "Tu talento merece más clientes",
+      "title": "Encuentra al profesional perfecto",
       "subtitle":
-          "Haz visible tu experiencia, destaca tus habilidades y conecta con personas que realmente valoran tu trabajo.",
-      "image": "assets/images/worker/worker.png",
+          "Explora una amplia red de trabajadores calificados para cualquier necesidad de tu hogar.",
+      "image": "assets/images/client/client.png",
     },
     {
-      "title": "Construye tu reputación y consiga más clientes",
+      "title": "Comunica directamente",
       "subtitle":
-          "Cada servicio completado suma confianza y mejores calificaciones, ayudándote a atraer nuevas oportunidades.",
-      "image": "assets/images/worker/worker_confiable.png",
+          "Chatea con los profesionales, discute detalles y establece acuerdos de manera fácil.",
+      "image": "assets/images/client/client_chat.png",
     },
     {
-      "title": "Recibe pagos seguros dentro de la app",
+      "title": "Servicios garantizados",
       "subtitle":
-          "Gestiona tus cobros de forma protegida, con respaldo y registro claro de cada trabajo realizado.",
-      "image": "assets/images/worker/worker_pay.png",
+          "Los profesionales tienen reseñas verificadas para que confíes en quien trabaja en tu hogar.",
+      "image": "assets/images/client/client_reviews.png",
     },
     {
-      "title": "Chatea y acuerda el servicio",
+      "title": "Pagos seguros",
       "subtitle":
-          "Habla directamente con el cliente, define los detalles y formaliza el trabajo con total claridad.",
-      "image": "assets/images/worker/worker_chat.png",
+          "Realiza pagos dentro de la app con total seguridad y protección.",
+      "image": "assets/images/client/client_pay.png",
     },
   ];
+
   void nextPage() {
     if (currentIndex < pages.length - 1) {
       _controller.nextPage(
@@ -50,7 +51,7 @@ class _WorkerOnboardingPageState extends State<WorkerOnboardingPage> {
         curve: Curves.ease,
       );
     } else {
-      goToCompleteProfile();
+      goToHome();
     }
   }
 
@@ -63,14 +64,14 @@ class _WorkerOnboardingPageState extends State<WorkerOnboardingPage> {
     }
   }
 
-  Future<void> goToCompleteProfile() async {
+  Future<void> goToHome() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool("hasSeenWorkerOnboarding", true);
+    await prefs.setBool("hasSeenClientOnboarding", true);
 
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const CompleteProfilePage()),
+      MaterialPageRoute(builder: (_) => const ClientHomePage()),
     );
   }
 
@@ -160,8 +161,8 @@ class _WorkerOnboardingPageState extends State<WorkerOnboardingPage> {
                 ElevatedButton(
                   onPressed: nextPage,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: AppTheme.primary,
+                    backgroundColor: AppTheme.clientPrimary,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 32,
                       vertical: 12,

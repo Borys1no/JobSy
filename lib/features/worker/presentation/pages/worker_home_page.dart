@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jobsy/core/theme/app_theme.dart';
 import 'package:jobsy/features/worker/domain/worker_home_state.dart';
 import 'package:jobsy/features/worker/presentation/worker_home/worker_home_controller.dart';
+import 'package:jobsy/features/worker/presentation/pages/worker_reviews_page.dart';
+import 'package:jobsy/features/notifications/presentation/notifications_page.dart';
+import 'package:jobsy/features/worker/presentation/pages/worker_profile_page.dart';
 
 class WorkerHomePage extends ConsumerStatefulWidget {
   const WorkerHomePage({super.key});
@@ -18,28 +21,67 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
   Widget build(BuildContext context) {
     final state = ref.watch(workerHomeControllerProvider);
     final controller = ref.read(workerHomeControllerProvider.notifier);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? const Color(0xFF121212) : Colors.grey[50];
+    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subtitleColor = isDark ? Colors.grey[400] : Colors.grey[600];
+    final borderColor = isDark ? const Color(0xFF3C3C3C) : Colors.grey[200]!;
 
     if (state.isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        backgroundColor: Colors.grey[50],
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.construction, size: 60, color: AppTheme.primary),
+              const SizedBox(height: 16),
+              Text(
+                'JobSy',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primary,
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppTheme.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     return Scaffold(
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: cardColor,
         elevation: 0,
         title: Text(
           'Hola, ${state.name ?? 'Trabajador'}',
-          style: const TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsPage(),
+                ),
+              );
+            },
             icon: Stack(
               children: [
-                const Icon(Icons.notifications_outlined, color: Colors.black),
+                Icon(Icons.notifications_outlined, color: textColor),
                 Positioned(
                   right: 0,
                   top: 0,
@@ -108,9 +150,14 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
     WorkerHomeState state,
     WorkerHomeController controller,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subtitleColor = isDark ? Colors.grey[400] : Colors.grey[600];
+
     return Container(
       padding: const EdgeInsets.all(16),
-      color: Colors.white,
+      color: cardColor,
       child: Row(
         children: [
           Stack(
@@ -121,14 +168,20 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
                     : null,
                 child: CircleAvatar(
                   radius: 45,
-                  backgroundColor: Colors.grey[200],
+                  backgroundColor: isDark
+                      ? const Color(0xFF3C3C3C)
+                      : Colors.grey[200],
                   backgroundImage: state.avatarPath != null
                       ? FileImage(File(state.avatarPath!)) as ImageProvider
                       : state.avatarUrl != null
                       ? NetworkImage(state.avatarUrl!) as ImageProvider
                       : null,
                   child: state.avatarPath == null && state.avatarUrl == null
-                      ? const Icon(Icons.person, size: 45, color: Colors.grey)
+                      ? Icon(
+                          Icons.person,
+                          size: 45,
+                          color: isDark ? Colors.grey[600] : Colors.grey,
+                        )
                       : null,
                 ),
               ),
@@ -160,15 +213,16 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
               children: [
                 Text(
                   state.name ?? '',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
+                    color: textColor,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   state.profession ?? '',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 14, color: subtitleColor),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -177,15 +231,16 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
                     const SizedBox(width: 4),
                     Text(
                       state.rating.toStringAsFixed(1),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
+                        color: textColor,
                       ),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       '(${state.reviewCount} reseñas)',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                      style: TextStyle(color: subtitleColor, fontSize: 14),
                     ),
                   ],
                 ),
@@ -198,17 +253,23 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
   }
 
   Widget _buildDescriptionSection(WorkerHomeState state) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subtitleColor = isDark ? Colors.grey[400] : Colors.grey[600];
+    final borderColor = isDark ? const Color(0xFF3C3C3C) : Colors.grey[200]!;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: borderColor),
       ),
       child: Text(
         state.description ?? '',
-        style: TextStyle(fontSize: 14, color: Colors.grey[700], height: 1.5),
+        style: TextStyle(fontSize: 14, color: subtitleColor, height: 1.5),
       ),
     );
   }
@@ -217,6 +278,21 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
     WorkerHomeState state,
     WorkerHomeController controller,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subtitleColor = isDark ? Colors.grey[400]! : Colors.grey[600]!;
+    final borderColor = isDark ? const Color(0xFF3C3C3C) : Colors.grey[200]!;
+    final chipBgColor = isDark ? const Color(0xFF2C2C2C) : Colors.grey[50]!;
+    final chipBlueBgColor = isDark ? const Color(0xFF1A3A5C) : Colors.blue[50]!;
+    final chipBorderColor = isDark
+        ? const Color(0xFF3C3C3C)
+        : Colors.grey[200]!;
+    final addChipBgColor = isDark ? const Color(0xFF2C2C2C) : Colors.grey[100]!;
+    final addChipBorderColor = isDark
+        ? const Color(0xFF3C3C3C)
+        : Colors.grey[300]!;
+
     final allJobNames = [
       ...state.additionalJobs.map((j) => j.name),
       ...state.customServices.map((j) => j.name),
@@ -241,9 +317,9 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.grey[50],
+                  color: chipBgColor,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey[200]!),
+                  border: Border.all(color: chipBorderColor),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -282,9 +358,9 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue[50],
+                  color: chipBlueBgColor,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue[200]!),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -320,11 +396,11 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
             const SizedBox(height: 16),
           ],
           if (state.availableTasks.isNotEmpty) ...[
-            const Text(
+            Text(
               'Agregar trabajo adicional',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey,
+                color: subtitleColor,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -348,18 +424,18 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.grey[100],
+                          color: addChipBgColor,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.grey[300]!),
+                          border: Border.all(color: addChipBorderColor),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.add, size: 16, color: Colors.grey),
+                            Icon(Icons.add, size: 16, color: subtitleColor),
                             const SizedBox(width: 4),
                             Text(
                               task.name,
-                              style: const TextStyle(color: Colors.grey),
+                              style: TextStyle(color: subtitleColor),
                             ),
                           ],
                         ),
@@ -377,19 +453,19 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.blue[50],
+                  color: chipBlueBgColor,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue[200]!),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.add, color: Colors.blue[700], size: 20),
+                    Icon(Icons.add, color: AppTheme.primary, size: 20),
                     const SizedBox(width: 8),
                     Text(
                       'Agregar otro servicio personalizado',
                       style: TextStyle(
-                        color: Colors.blue[700],
+                        color: AppTheme.primary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -541,18 +617,25 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
   }
 
   Widget _buildActiveJobsSection(WorkerHomeState state) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final chipBgColor = isDark ? const Color(0xFF2C2C2C) : Colors.grey[100]!;
+    final borderColor = isDark ? const Color(0xFF3C3C3C) : Colors.grey[200]!;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subtitleColor = isDark ? Colors.grey[400] : Colors.grey[600];
+
     if (state.activeJobs.isEmpty) {
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: chipBgColor,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Center(
+        child: Center(
           child: Text(
             'No tienes trabajos en marcha',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: subtitleColor),
           ),
         ),
       );
@@ -564,9 +647,9 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardColor,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[200]!),
+            border: Border.all(color: borderColor),
           ),
           child: Row(
             children: [
@@ -585,16 +668,19 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
                   children: [
                     Text(
                       job.service,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: textColor,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       job.clientName,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      style: TextStyle(color: subtitleColor, fontSize: 13),
                     ),
                     Text(
                       job.address,
-                      style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      style: TextStyle(color: subtitleColor, fontSize: 12),
                     ),
                   ],
                 ),
@@ -608,13 +694,17 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.orange[50],
+                      color: isDark
+                          ? const Color(0xFF3C2A10)
+                          : Colors.orange[50],
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       _formatDate(job.date),
                       style: TextStyle(
-                        color: Colors.orange[700],
+                        color: isDark
+                            ? Colors.orange[300]!
+                            : Colors.orange[700],
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -642,12 +732,19 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
     WorkerHomeState state,
     WorkerHomeController controller,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final chipBgColor = isDark ? const Color(0xFF2C2C2C) : Colors.grey[100]!;
+    final chipBorderColor = isDark
+        ? const Color(0xFF3C3C3C)
+        : Colors.grey[300]!;
+    final subtitleColor = isDark ? Colors.grey[400] : Colors.grey[600];
+
     if (state.workPhotos.isEmpty) {
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16),
         height: 150,
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: chipBgColor,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Center(
@@ -655,12 +752,12 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
             onTap: controller.addWorkPhoto,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.add_photo_alternate, size: 40, color: Colors.grey),
-                SizedBox(height: 8),
+              children: [
+                Icon(Icons.add_photo_alternate, size: 40, color: subtitleColor),
+                const SizedBox(height: 8),
                 Text(
                   'Agrega fotos de tus trabajos',
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: subtitleColor),
                 ),
               ],
             ),
@@ -733,7 +830,7 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
               margin: const EdgeInsets.symmetric(horizontal: 4),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.grey[300],
+                color: chipBorderColor,
               ),
             );
           }),
@@ -862,20 +959,27 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
     WorkerHomeState state,
     WorkerHomeController controller,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF3C3C3C) : Colors.grey[200]!;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subtitleColor = isDark ? Colors.grey[400] : Colors.grey[600];
+    final chipBgColor = isDark ? const Color(0xFF2C2C2C) : Colors.grey[200]!;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Días disponibles',
-            style: TextStyle(fontWeight: FontWeight.w600),
+            style: TextStyle(fontWeight: FontWeight.w600, color: textColor),
           ),
           const SizedBox(height: 12),
           Row(
@@ -890,7 +994,7 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
                       _dayNames[index],
                       style: TextStyle(
                         fontSize: 12,
-                        color: isAvailable ? AppTheme.primary : Colors.grey,
+                        color: isAvailable ? AppTheme.primary : subtitleColor,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -899,13 +1003,11 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
                       height: 36,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isAvailable
-                            ? AppTheme.primary
-                            : Colors.grey[200],
+                        color: isAvailable ? AppTheme.primary : chipBgColor,
                       ),
                       child: Icon(
                         isAvailable ? Icons.check : Icons.close,
-                        color: isAvailable ? Colors.white : Colors.grey,
+                        color: isAvailable ? Colors.white : subtitleColor,
                         size: 18,
                       ),
                     ),
@@ -928,7 +1030,17 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
   }
 
   Widget _buildReviewsSection(BuildContext context, WorkerHomeState state) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF3C3C3C) : Colors.grey[200]!;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subtitleColor = isDark ? Colors.grey[400] : Colors.grey[600];
+    final chipBgColor = isDark ? const Color(0xFF2C2C2C) : Colors.grey[200]!;
     final displayCount = state.reviews.length > 3 ? 3 : state.reviews.length;
+
+    if (displayCount == 0) {
+      return const SizedBox.shrink();
+    }
 
     return Column(
       children: [
@@ -943,9 +1055,9 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cardColor,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[200]!),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -954,9 +1066,11 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
                       children: [
                         CircleAvatar(
                           radius: 20,
-                          backgroundColor: Colors.grey[200],
+                          backgroundColor: chipBgColor,
                           child: Text(
-                            review.clientName[0],
+                            review.clientName.isNotEmpty
+                                ? review.clientName[0]
+                                : '?',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -967,8 +1081,9 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
                             children: [
                               Text(
                                 review.clientName,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w600,
+                                  color: textColor,
                                 ),
                               ),
                               Row(
@@ -993,7 +1108,7 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
                     Expanded(
                       child: Text(
                         review.comment,
-                        style: TextStyle(color: Colors.grey[700], height: 1.4),
+                        style: TextStyle(color: subtitleColor, height: 1.4),
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1001,7 +1116,7 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
                     const SizedBox(height: 8),
                     Text(
                       review.service,
-                      style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      style: TextStyle(color: subtitleColor, fontSize: 12),
                     ),
                   ],
                 ),
@@ -1012,7 +1127,14 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
         if (state.reviews.length > 3) ...[
           const SizedBox(height: 12),
           TextButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const WorkerReviewsPage(),
+                ),
+              );
+            },
             child: const Text('Ver todas las reseñas'),
           ),
         ],
@@ -1021,12 +1143,17 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
   }
 
   Widget _buildBottomNavBar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subColor = isDark ? Colors.grey[400]! : Colors.grey[600]!;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: bgColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.2),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -1038,10 +1165,45 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(Icons.home, 'Inicio', true, () {}),
-              _buildNavItem(Icons.search, 'Buscar', false, () {}),
-              _buildNavItem(Icons.chat_bubble_outline, 'Chat', false, () {}),
-              _buildNavItem(Icons.person_outline, 'Perfil', false, () {}),
+              _buildNavItem(
+                Icons.home,
+                'Inicio',
+                true,
+                () {},
+                textColor,
+                subColor,
+              ),
+              _buildNavItem(
+                Icons.search,
+                'Buscar',
+                false,
+                () {},
+                textColor,
+                subColor,
+              ),
+              _buildNavItem(
+                Icons.chat_bubble_outline,
+                'Chat',
+                false,
+                () {},
+                textColor,
+                subColor,
+              ),
+              _buildNavItem(
+                Icons.person_outline,
+                'Perfil',
+                false,
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const WorkerProfilePage(),
+                    ),
+                  );
+                },
+                textColor,
+                subColor,
+              ),
             ],
           ),
         ),
@@ -1054,6 +1216,8 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
     String label,
     bool isActive,
     VoidCallback onTap,
+    Color textColor,
+    Color subColor,
   ) {
     return GestureDetector(
       onTap: onTap,

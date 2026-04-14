@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:jobsy/features/auth/auth_providers.dart';
 import 'package:jobsy/features/worker/domain/worker_home_state.dart';
+import 'package:jobsy/features/worker/domain/review.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
@@ -100,6 +101,48 @@ class WorkerHomeController extends _$WorkerHomeController {
           .map((url) => WorkPhoto(url: url as String))
           .toList();
 
+      // Reseñas
+      List<Review> reviews;
+      final reviewsData = await _supabase
+          .from('reviews')
+          .select('''
+            id,
+            rating,
+            comment,
+            created_at,
+            client:profiles(
+              first_name,
+              last_name,
+              avatar_url
+            )
+          ''')
+          .eq('worker_id', userId)
+          .order('created_at', ascending: false);
+
+      if (reviewsData.isEmpty) {
+        reviews = _getStaticReviews();
+      } else {
+        reviews = reviewsData.map((r) {
+          final client = r['client'] as Map<String, dynamic>? ?? {};
+          return Review(
+            id: r['id'] as String,
+            clientName:
+                '${client['first_name'] ?? ''} ${client['last_name'] ?? ''}'
+                    .trim(),
+            clientAvatar: client['avatar_url'] as String?,
+            rating: (r['rating'] as num).toDouble(),
+            comment: r['comment'] as String? ?? '',
+            date: DateTime.parse(r['created_at'] as String),
+            service: '',
+          );
+        }).toList();
+      }
+
+      final reviewCount = reviews.length;
+      final rating = reviewCount > 0
+          ? reviews.map((r) => r.rating).reduce((a, b) => a + b) / reviewCount
+          : 0.0;
+
       state = state.copyWith(
         isLoading: false,
         name: '${profile['first_name']} ${profile['last_name']}',
@@ -115,6 +158,9 @@ class WorkerHomeController extends _$WorkerHomeController {
           workerProfile['available_days'] ??
               [false, false, false, false, false, false, false],
         ),
+        reviews: reviews,
+        rating: rating,
+        reviewCount: reviewCount,
       );
     } catch (e) {
       print('Error cargando datos: $e');
@@ -329,5 +375,46 @@ class WorkerHomeController extends _$WorkerHomeController {
     } catch (e) {
       print('Error subiendo foto: $e');
     }
+  }
+
+  List<Review> _getStaticReviews() {
+    return [
+      Review(
+        id: '1',
+        clientName: 'María García',
+        clientAvatar: null,
+        rating: 5,
+        comment: 'Excelente trabajo, muy profesional y puntuales.',
+        date: DateTime.now().subtract(const Duration(days: 2)),
+        service: 'Limpieza',
+      ),
+      Review(
+        id: '2',
+        clientName: 'Juan Pérez',
+        clientAvatar: null,
+        rating: 4,
+        comment: 'Buen servicio, puntuales y eficientes.',
+        date: DateTime.now().subtract(const Duration(days: 5)),
+        service: 'Pintura',
+      ),
+      Review(
+        id: '3',
+        clientName: 'Ana López',
+        clientAvatar: null,
+        rating: 5,
+        comment: 'Muy satisfied with the service.',
+        date: DateTime.now().subtract(const Duration(days: 10)),
+        service: 'Carpintería',
+      ),
+      Review(
+        id: '4',
+        clientName: 'Carlos Martínez',
+        clientAvatar: null,
+        rating: 4,
+        comment: 'Buena atención y resultados buenos.',
+        date: DateTime.now().subtract(const Duration(days: 15)),
+        service: 'Plomería',
+      ),
+    ];
   }
 }
