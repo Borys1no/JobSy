@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jobsy/core/theme/app_theme.dart';
 import 'package:jobsy/features/client/domain/client_home_state.dart';
 import 'package:jobsy/features/client/presentation/client_home/client_home_controller.dart';
+import 'package:jobsy/features/client/presentation/pages/all_workers_page.dart';
+import 'package:jobsy/features/client/presentation/pages/category_workers_page.dart';
+import 'package:jobsy/features/client/presentation/pages/featured_workers_page.dart';
+import 'package:jobsy/features/client/presentation/pages/task_workers_page.dart';
 import 'package:jobsy/features/notifications/presentation/notifications_page.dart';
 
 class ClientHomePage extends ConsumerStatefulWidget {
@@ -180,9 +184,16 @@ class _ClientHomePageState extends ConsumerState<ClientHomePage> {
                 ),
               ),
               TextButton(
-                onPressed: () {},
-                child: Text(
-                  'Mostrar todo',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const FeaturedWorkersPage(),
+                    ),
+                  );
+                },
+                child: const Text(
+                  'Ver todos',
                   style: TextStyle(color: AppTheme.clientPrimary),
                 ),
               ),
@@ -190,7 +201,7 @@ class _ClientHomePageState extends ConsumerState<ClientHomePage> {
           ),
         ),
         SizedBox(
-          height: 250,
+          height: 340,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -198,104 +209,208 @@ class _ClientHomePageState extends ConsumerState<ClientHomePage> {
             itemBuilder: (context, index) {
               final worker = state.featuredWorkers[index];
               return Container(
-                width: 160,
+                width: 260,
                 margin: const EdgeInsets.symmetric(horizontal: 4),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(
-                      child: CircleAvatar(
-                        radius: 35,
-                        backgroundColor: AppTheme.clientPrimary.withValues(
-                          alpha: 0.2,
-                        ),
-                        backgroundImage: worker.avatarUrl != null
-                            ? NetworkImage(worker.avatarUrl!) as ImageProvider
-                            : null,
-                        child: worker.avatarUrl == null
-                            ? Icon(
-                                Icons.person,
-                                size: 35,
-                                color: AppTheme.clientPrimary,
-                              )
-                            : null,
+                    Container(
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      worker.name,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: textColor,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      worker.profession,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.clientPrimary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      worker.description,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: subtitleColor,
-                        height: 1.2,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.star,
-                              color: Colors.amber,
-                              size: 14,
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              worker.rating.toStringAsFixed(1),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: textColor,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(16),
+                                ),
+                                child: SizedBox(
+                                  width: 260,
+                                  height: 150,
+                                  child: worker.avatarUrl != null
+                                      ? Image.network(
+                                          worker.avatarUrl!,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  Container(
+                                                    color: Colors.grey[300],
+                                                    child: Icon(
+                                                      Icons.person,
+                                                      size: 50,
+                                                      color: Colors.grey[500],
+                                                    ),
+                                                  ),
+                                        )
+                                      : Container(
+                                          color: Colors.grey[300],
+                                          child: Icon(
+                                            Icons.person,
+                                            size: 50,
+                                            color: Colors.grey[500],
+                                          ),
+                                        ),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        TextButton(
-                          onPressed: () {},
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: const Size(50, 30),
+                              Positioned(
+                                bottom: 8,
+                                left: 8,
+                                right: 8,
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            worker.name,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                              color: Colors.white,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          Text(
+                                            worker.profession,
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.white.withValues(
+                                                alpha: 0.9,
+                                              ),
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.6,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(
+                                            Icons.star,
+                                            color: Color(0xFFFFB800),
+                                            size: 14,
+                                          ),
+                                          const SizedBox(width: 2),
+                                          Text(
+                                            worker.rating.toStringAsFixed(1),
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          child: Text(
-                            'Ver más',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.clientPrimary,
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (worker.additionalServices.isNotEmpty) ...[
+                                  Wrap(
+                                    spacing: 4,
+                                    runSpacing: 4,
+                                    children: worker.additionalServices
+                                        .take(3)
+                                        .map((service) {
+                                          return Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppTheme.clientPrimary
+                                                  .withValues(alpha: 0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              service,
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color: AppTheme.clientPrimary,
+                                              ),
+                                            ),
+                                          );
+                                        })
+                                        .toList(),
+                                  ),
+                                  const SizedBox(height: 8),
+                                ],
+                                Text(
+                                  worker.description,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: subtitleColor,
+                                    height: 1.3,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 12),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: () {},
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppTheme.clientPrimary,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 10,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      elevation: 0,
+                                    ),
+                                    child: const Text(
+                                      'Ver perfil',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -318,77 +433,77 @@ class _ClientHomePageState extends ConsumerState<ClientHomePage> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Categorías',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Text(
-                  'Mostrar todo',
-                  style: TextStyle(color: AppTheme.clientPrimary),
-                ),
-              ),
-            ],
+          child: Text(
+            'Categorías',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
           ),
         ),
         SizedBox(
-          height: 140,
+          height: 170,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             itemCount: state.categories.length,
             itemBuilder: (context, index) {
               final category = state.categories[index];
-              return Container(
-                width: 140,
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppTheme.clientPrimary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        Icons.build,
-                        color: AppTheme.clientPrimary,
-                        size: 24,
-                      ),
+              final icon = _getCategoryIcon(category.name);
+              return InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          CategoryWorkersPage(categoryName: category.name),
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      category.name,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: textColor,
+                  );
+                },
+                child: Container(
+                  width: 160,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppTheme.clientPrimary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          icon,
+                          color: AppTheme.clientPrimary,
+                          size: 32,
+                        ),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      category.description,
-                      style: TextStyle(fontSize: 11, color: subtitleColor),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                      const SizedBox(height: 14),
+                      Text(
+                        category.name,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: textColor,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        category.description,
+                        style: TextStyle(fontSize: 12, color: subtitleColor),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
@@ -421,78 +536,111 @@ class _ClientHomePageState extends ConsumerState<ClientHomePage> {
                 ),
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AllWorkersPage(),
+                    ),
+                  );
+                },
                 child: Text(
-                  'Mostrar todo',
+                  'Ver todos',
                   style: TextStyle(color: AppTheme.clientPrimary),
                 ),
               ),
             ],
           ),
         ),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
+        Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: state.popularJobs.length,
-          itemBuilder: (context, index) {
-            final job = state.popularJobs[index];
-            return Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppTheme.clientPrimary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 1.3,
+            ),
+            itemCount: state.popularJobs.length > 4
+                ? 4
+                : state.popularJobs.length,
+            itemBuilder: (context, index) {
+              final job = state.popularJobs[index];
+              final icon = _getJobIcon(job.name);
+              return Container(
+                decoration: BoxDecoration(
+                  color: cardColor,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-                    child: Icon(
-                      Icons.handyman,
-                      color: AppTheme.clientPrimary,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          job.name,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: textColor,
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              TaskWorkersPage(taskName: job.name),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppTheme.clientPrimary.withValues(
+                                alpha: 0.1,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              icon,
+                              color: AppTheme.clientPrimary,
+                              size: 24,
+                            ),
                           ),
-                        ),
-                        Text(
-                          '${job.requestCount} solicitudes',
-                          style: TextStyle(fontSize: 12, color: subtitleColor),
-                        ),
-                      ],
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {},
-                    style: TextButton.styleFrom(
-                      backgroundColor: AppTheme.clientPrimary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                          const SizedBox(height: 10),
+                          Text(
+                            job.name,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              color: textColor,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${job.requestCount > 0 ? job.requestCount : 12} solicitudes',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: subtitleColor,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: const Text('Solicitar'),
                   ),
-                ],
-              ),
-            );
-          },
+                ),
+              );
+            },
+          ),
         ),
       ],
     );
@@ -585,5 +733,50 @@ class _ClientHomePageState extends ConsumerState<ClientHomePage> {
         ],
       ),
     );
+  }
+
+  IconData _getCategoryIcon(String categoryName) {
+    switch (categoryName.toLowerCase()) {
+      case 'limpieza':
+        return Icons.cleaning_services;
+      case 'electricidad':
+        return Icons.electrical_services;
+      case 'plomería':
+        return Icons.plumbing;
+      case 'pintura':
+        return Icons.format_paint;
+      default:
+        return Icons.build;
+    }
+  }
+
+  IconData _getJobIcon(String jobName) {
+    final name = jobName.toLowerCase();
+    if (name.contains('limpieza') || name.contains('clean')) {
+      return Icons.cleaning_services;
+    } else if (name.contains('electric') ||
+        name.contains('luz') ||
+        name.contains('cable')) {
+      return Icons.electrical_services;
+    } else if (name.contains('plom') ||
+        name.contains('agua') ||
+        name.contains('dren')) {
+      return Icons.plumbing;
+    } else if (name.contains('pint') || name.contains('painted')) {
+      return Icons.format_paint;
+    } else if (name.contains('jardin') ||
+        name.contains('grass') ||
+        name.contains('plants')) {
+      return Icons.yard;
+    } else if (name.contains('carpinter') ||
+        name.contains('wood') ||
+        name.contains('muebl')) {
+      return Icons.carpenter;
+    } else if (name.contains('tech') || name.contains('techo')) {
+      return Icons.roofing;
+    } else if (name.contains('mudanza') || name.contains('move')) {
+      return Icons.local_shipping;
+    }
+    return Icons.handyman;
   }
 }

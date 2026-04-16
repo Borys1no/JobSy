@@ -20,116 +20,181 @@ class ClientHomeController extends _$ClientHomeController {
     try {
       state = state.copyWith(isLoading: true);
 
-      // Verificar si hay reseñas, si no hay, insertar de ejemplo
-      await _ensureSampleReviews();
-
-      // Obtener todos los workers con sus perfiles
+      // Obtener todos los workers con su perfil
       final workersData = await _supabase
           .from('profiles')
           .select('''
             id,
             first_name,
             last_name,
-            avatar_url,
-            worker_profiles(
-              profession,
-              bio
-            )
+            avatar_url
           ''')
-          .eq('role', 'worker')
-          .not('worker_profiles', 'is', null);
+          .eq('role', 'worker');
 
-      // Calcular rating dinámicamente desde tabla reviews
-      final featuredWorkers = <FeaturedWorker>[];
+      List<FeaturedWorker> workers = [];
+      if (workersData.isNotEmpty) {
+        // Calcular rating dinámicamente desde tabla reviews
+        final featuredWorkers = <FeaturedWorker>[];
 
-      for (final w in workersData) {
-        final workerId = w['id'] as String;
-        final wp = w['worker_profiles'] as Map<String, dynamic>? ?? {};
+        for (final w in workersData) {
+          final workerId = w['id'] as String;
 
-        // Buscar reseñas del worker y calcular rating promedio
-        final reviews = await _supabase
-            .from('reviews')
-            .select('rating')
-            .eq('worker_id', workerId);
+          // Obtener bio del worker_profiles
+          final workerProfileData = await _supabase
+              .from('worker_profiles')
+              .select('bio, user_id')
+              .eq('user_id', workerId)
+              .maybeSingle();
 
-        final reviewCount = reviews.length;
-        double rating = 0;
-        if (reviewCount > 0) {
-          final totalRating = reviews.fold<int>(
-            0,
-            (sum, r) => sum + (r['rating'] as int),
+          if (workerProfileData == null) {
+            print('Worker $workerId sin worker_profiles');
+            continue;
+          }
+
+          // Obtener la profesión desde worker_services -> services
+          String profession = 'Trabajador';
+
+          final services = await _supabase
+              .from('worker_services')
+              .select('services(name)')
+              .eq('worker_id', workerId)
+              .eq('service_type', 'primary');
+
+          if (services.isNotEmpty) {
+            profession =
+                services.first['services']?['name'] as String? ?? 'Trabajador';
+          }
+
+          //Servicios adicionales - servicios precargados
+          final additionalServicesData = await _supabase
+              .from('worker_tasks')
+              .select('tasks(name)')
+              .eq('worker_id', workerId);
+
+          final precargados = additionalServicesData
+              .map((s) => s['tasks']?['name'] as String?)
+              .where((s) => s != null)
+              .cast<String>()
+              .toList();
+
+          //Servicios adicionales - servicios personalizados
+          final customServicesData = await _supabase
+              .from('custom_services')
+              .select('name')
+              .eq('worker_id', workerId);
+
+          final personalizados = customServicesData
+              .map((s) => s['name'] as String?)
+              .where((s) => s != null)
+              .cast<String>()
+              .toList();
+
+          final servicesList = [...precargados, ...personalizados];
+
+          // Buscar reseñas del worker y calcular rating promedio
+          final reviews = await _supabase
+              .from('reviews')
+              .select('rating')
+              .eq('worker_id', workerId);
+
+          final reviewCount = reviews.length;
+          double rating = 0;
+          if (reviewCount > 0) {
+            final totalRating = reviews.fold<int>(
+              0,
+              (sum, r) => sum + ((r['rating'] as num?)?.toInt() ?? 0),
+            );
+            rating = totalRating / reviewCount;
+          }
+
+          print(
+            'Worker: ${w['first_name']}, rating: $rating, reviews: $reviewCount',
           );
-          rating = totalRating / reviewCount;
+          print('  precargados: $precargados, personalizados: $personalizados');
+
+          // Agregar workers con rating >= 4.5
+          if (rating >= 4.5) {
+            featuredWorkers.add(
+              FeaturedWorker(
+                id: workerId,
+                name: '${w['first_name'] ?? ''} ${w['last_name'] ?? ''}'.trim(),
+                profession: profession,
+                avatarUrl: w['avatar_url'] as String?,
+                description: workerProfileData['bio'] as String? ?? '',
+                rating: rating,
+                reviewCount: reviewCount,
+                additionalServices: servicesList,
+              ),
+            );
+          }
         }
 
-        // Solo agregar workers con rating >= 4.5
-        if (rating >= 4.5) {
-          featuredWorkers.add(
-            FeaturedWorker(
-              id: workerId,
-              name: '${w['first_name'] ?? ''} ${w['last_name'] ?? ''}'.trim(),
-              profession: wp['profession'] as String? ?? '',
-              avatarUrl: w['avatar_url'] as String?,
-              description: wp['bio'] as String? ?? '',
-              rating: rating,
-              reviewCount: reviewCount,
-            ),
-          );
-        }
+        workers = featuredWorkers.isEmpty
+            ? _getSampleWorkers()
+            : featuredWorkers;
+      } else {
+        workers = _getSampleWorkers();
       }
 
-      // Si no hay workers en BD con rating >= 4.5, usar datos de ejemplo
-      final workers = featuredWorkers.isEmpty
-          ? _getSampleWorkers()
-          : featuredWorkers;
+      // Cargar categorías desde BD (si existe la tabla)
+      List<Map<String, dynamic>> categoriesData;
+      try {
+        categoriesData = await _supabase
+            .from('categories')
+            .select('id, name, description, icon')
+            .order('name');
+        print('Categories data: $categoriesData');
+      } catch (e) {
+        print('Error fetching categories: $e');
+        categoriesData = [];
+      }
 
-      // Categorías (de la tabla services)
-      final services = await _supabase
-          .from('services')
-          .select('id, name, description, icon')
-          .eq('is_category', true)
-          .order('name');
+      final cats = categoriesData.isEmpty
+          ? _getSampleCategories()
+          : categoriesData
+                .map(
+                  (c) => Category(
+                    id: c['id'].toString(),
+                    name: c['name'] as String? ?? 'Categoría',
+                    description: c['description'] as String? ?? '',
+                    icon: c['icon'] as String? ?? 'build',
+                    workerCount: 0,
+                  ),
+                )
+                .toList();
 
-      final categories = services
-          .map(
-            (s) => Category(
-              id: s['id'] as String,
-              name: s['name'] as String,
-              description: s['description'] as String? ?? '',
-              icon: s['icon'] as String? ?? 'build',
-              workerCount: 0,
-            ),
-          )
-          .toList();
+      // Cargar trabajos populares desde tabla tasks
+      List<Map<String, dynamic>> tasksData;
+      try {
+        tasksData = await _supabase
+            .from('tasks')
+            .select('id, name')
+            .eq('is_popular', true)
+            .order('name');
+        print('Tasks data: $tasksData');
+      } catch (e) {
+        print('Error fetching tasks: $e');
+        tasksData = [];
+      }
 
-      final cats = categories.isEmpty ? _getSampleCategories() : categories;
-
-      // Trabajos populares (de tasks con is_popular)
-      final tasks = await _supabase
-          .from('tasks')
-          .select('id, name, icon, request_count')
-          .eq('is_popular', true)
-          .order('request_count', ascending: false)
-          .limit(4);
-
-      final popularJobs = tasks
-          .map(
-            (t) => PopularJob(
-              id: t['id'] as String,
-              name: t['name'] as String,
-              icon: t['icon'] as String? ?? 'handyman',
-              requestCount: (t['request_count'] as int?) ?? 0,
-            ),
-          )
-          .toList();
-
-      final jobs = popularJobs.isEmpty ? _getSamplePopularJobs() : popularJobs;
+      final popularJobs = tasksData.isEmpty
+          ? _getSamplePopularJobs()
+          : tasksData.map((t) {
+              return PopularJob(
+                id: t['id'].toString(),
+                name: t['name'] as String? ?? 'Servicio',
+                icon: 'handyman',
+                requestCount: 0,
+              );
+            }).toList();
 
       state = state.copyWith(
         isLoading: false,
         featuredWorkers: workers,
         categories: cats,
-        popularJobs: jobs,
+        popularJobs: popularJobs.isEmpty
+            ? _getSamplePopularJobs()
+            : popularJobs,
       );
     } catch (e) {
       print('Error cargando datos client: $e');
@@ -139,107 +204,6 @@ class ClientHomeController extends _$ClientHomeController {
         categories: _getSampleCategories(),
         popularJobs: _getSamplePopularJobs(),
       );
-    }
-  }
-
-  Future<void> _ensureSampleReviews() async {
-    // Verificar si ya hay reseñas
-    final existingReviews = await _supabase.from('reviews').select();
-    if (existingReviews.isNotEmpty) return;
-
-    // Obtener workers existentes
-    final workers = await _supabase
-        .from('profiles')
-        .select('id')
-        .eq('role', 'worker')
-        .not('worker_profiles', 'is', null);
-
-    // Obtener clients existentes
-    final clients = await _supabase
-        .from('profiles')
-        .select('id')
-        .eq('role', 'client')
-        .limit(3);
-
-    if (workers.isEmpty || clients.isEmpty) return;
-
-    final workerId = workers.first['id'] as String;
-    final clientIds = clients.map((c) => c['id'] as String).toList();
-
-    // Insertar reseñas de ejemplo para el worker
-    // 6 reseñas de 5 y 1 de 4 = promedio 4.86 >= 4.5
-    final sampleReviews = [
-      {
-        'worker_id': workerId,
-        'client_id': clientIds[0],
-        'rating': 5,
-        'comment': 'Excelente servicio, muy profesional y puntual.',
-        'created_at': DateTime.now()
-            .subtract(const Duration(days: 1))
-            .toIso8601String(),
-      },
-      {
-        'worker_id': workerId,
-        'client_id': clientIds[0],
-        'rating': 5,
-        'comment': 'Muy buen trabajo, lo recomiendo.',
-        'created_at': DateTime.now()
-            .subtract(const Duration(days: 3))
-            .toIso8601String(),
-      },
-      {
-        'worker_id': workerId,
-        'client_id': clientIds[0],
-        'rating': 5,
-        'comment': 'Buen servicio, cumple con lo pactado.',
-        'created_at': DateTime.now()
-            .subtract(const Duration(days: 5))
-            .toIso8601String(),
-      },
-      {
-        'worker_id': workerId,
-        'client_id': clientIds[0],
-        'rating': 5,
-        'comment': 'Excelente, muy satisfecho con el trabajo.',
-        'created_at': DateTime.now()
-            .subtract(const Duration(days: 7))
-            .toIso8601String(),
-      },
-      {
-        'worker_id': workerId,
-        'client_id': clientIds[0],
-        'rating': 4,
-        'comment': 'Regular, podrían mejorar.',
-        'created_at': DateTime.now()
-            .subtract(const Duration(days: 10))
-            .toIso8601String(),
-      },
-      {
-        'worker_id': workerId,
-        'client_id': clientIds[0],
-        'rating': 5,
-        'comment': 'Muy profesional y atendido.',
-        'created_at': DateTime.now()
-            .subtract(const Duration(days: 14))
-            .toIso8601String(),
-      },
-      {
-        'worker_id': workerId,
-        'client_id': clientIds[0],
-        'rating': 5,
-        'comment': 'Perfecto, lo contrataría de nuevo.',
-        'created_at': DateTime.now()
-            .subtract(const Duration(days: 20))
-            .toIso8601String(),
-      },
-    ];
-
-    for (final review in sampleReviews) {
-      try {
-        await _supabase.from('reviews').insert(review);
-      } catch (e) {
-        // Ignorar errores de duplicados
-      }
     }
   }
 
@@ -254,6 +218,11 @@ class ClientHomeController extends _$ClientHomeController {
             'Técnico electricista con 10 años de experiencia en instalaciones residenciales y comerciales.',
         rating: 4.8,
         reviewCount: 24,
+        additionalServices: [
+          'Instalación de ventiladores',
+          'Reparación de cortocircuitos',
+          'Cambio de breakers',
+        ],
       ),
       FeaturedWorker(
         id: '2',
@@ -264,6 +233,7 @@ class ClientHomeController extends _$ClientHomeController {
             'Limpieza profunda y mantenimiento para hogares y oficinas.',
         rating: 4.9,
         reviewCount: 38,
+        additionalServices: ['Limpieza de ventanas', 'Lavandería', 'Planchado'],
       ),
       FeaturedWorker(
         id: '3',
@@ -273,6 +243,11 @@ class ClientHomeController extends _$ClientHomeController {
         description: 'Reparaciones de plomería, instalación de heater y más.',
         rating: 4.7,
         reviewCount: 18,
+        additionalServices: [
+          'Destape de drenajes',
+          'Instalación de regaderas',
+          'Reparación de fugas',
+        ],
       ),
     ];
   }

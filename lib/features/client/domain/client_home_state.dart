@@ -41,6 +41,7 @@ class FeaturedWorker {
   final String description;
   final double rating;
   final int reviewCount;
+  final List<String> additionalServices;
 
   FeaturedWorker({
     required this.id,
@@ -50,6 +51,7 @@ class FeaturedWorker {
     required this.description,
     required this.rating,
     required this.reviewCount,
+    this.additionalServices = const [],
   });
 }
 
