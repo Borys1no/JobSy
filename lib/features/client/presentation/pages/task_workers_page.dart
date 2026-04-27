@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jobsy/core/theme/app_theme.dart';
 import 'package:jobsy/features/auth/auth_providers.dart';
+import 'package:jobsy/features/client/domain/profile_check_helper.dart';
+import 'package:jobsy/features/client/presentation/pages/worker_profile_view_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final taskWorkersProvider =
@@ -329,7 +331,22 @@ class TaskWorkersPage extends ConsumerWidget {
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: () {},
+                              onPressed: () async {
+                                final canView = await checkAndShowProfileCompletion(
+                                  context: context,
+                                  ref: ref,
+                                );
+                                if (canView) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => WorkerProfileViewPage(
+                                        workerId: worker['id'] as String,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.clientPrimary,
                                 foregroundColor: Colors.white,

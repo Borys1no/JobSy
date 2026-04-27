@@ -7,7 +7,10 @@ import 'package:jobsy/features/worker/domain/worker_home_state.dart';
 import 'package:jobsy/features/worker/presentation/worker_home/worker_home_controller.dart';
 import 'package:jobsy/features/worker/presentation/pages/worker_reviews_page.dart';
 import 'package:jobsy/features/notifications/presentation/notifications_page.dart';
+import 'package:jobsy/features/notifications/presentation/notifications_controller.dart';
 import 'package:jobsy/features/worker/presentation/pages/worker_profile_page.dart';
+import 'package:jobsy/features/worker/presentation/chat/worker_chats_page.dart';
+import 'package:jobsy/features/worker/presentation/chat/worker_chat_controller.dart';
 
 class WorkerHomePage extends ConsumerStatefulWidget {
   const WorkerHomePage({super.key});
@@ -70,32 +73,27 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
           style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
         ),
         actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const NotificationsPage(),
+          Consumer(
+            builder: (context, ref, child) {
+              final notifications = ref.watch(notificationsControllerProvider).notifications;
+              final unreadCount = notifications.where((n) => !n.isRead).length;
+              
+              return Badge(
+                label: Text('$unreadCount'),
+                isLabelVisible: unreadCount > 0,
+                child: IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationsPage(),
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.notifications_outlined, color: textColor),
                 ),
               );
             },
-            icon: Stack(
-              children: [
-                Icon(Icons.notifications_outlined, color: textColor),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.primary,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
@@ -1181,13 +1179,45 @@ class _WorkerHomePageState extends ConsumerState<WorkerHomePage> {
                 textColor,
                 subColor,
               ),
-              _buildNavItem(
-                Icons.chat_bubble_outline,
-                'Chat',
-                false,
-                () {},
-                textColor,
-                subColor,
+              Consumer(
+                builder: (context, ref, _) {
+                  final hasUnread = ref.watch(workerChatControllerProvider.select(
+                    (s) => s.conversations.any((c) => c.hasUnreadMessages),
+                  ));
+
+                  return Stack(
+                    children: [
+                      _buildNavItem(
+                        Icons.chat_bubble_outline,
+                        'Chat',
+                        false,
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => WorkerChatsPage(),
+                            ),
+                          );
+                        },
+                        textColor,
+                        subColor,
+                      ),
+                      if (hasUnread)
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
               ),
               _buildNavItem(
                 Icons.person_outline,

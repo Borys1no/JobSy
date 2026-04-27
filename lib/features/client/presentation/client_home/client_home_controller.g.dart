@@ -7,7 +7,7 @@ part of 'client_home_controller.dart';
 // **************************************************************************
 
 String _$clientHomeControllerHash() =>
-    r'e64e158111b97350aa3f5e24344d7ecb58532356';
+    r'd144cf2748943c078d2e63b43d414f4c27a3e2c8';
 
 /// See also [ClientHomeController].
 @ProviderFor(ClientHomeController)

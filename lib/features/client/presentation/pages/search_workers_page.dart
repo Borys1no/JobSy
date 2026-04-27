@@ -1,0 +1,474 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jobsy/core/theme/app_theme.dart';
+import 'package:jobsy/features/auth/auth_providers.dart';
+import 'package:jobsy/features/client/domain/profile_check_helper.dart';
+import 'package:jobsy/features/client/presentation/pages/worker_profile_view_page.dart';
+
+final searchQueryProvider = StateProvider<String>((ref) => '');
+
+final searchWorkersProvider = FutureProvider.family<List<Map<String, dynamic>>, String>((ref, String query) async {
+  final supabase = ref.read(supabaseProvider);
+
+  final profilesData = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, avatar_url')
+      .eq('role', 'worker');
+
+  if (profilesData.isEmpty) {
+    return [];
+  }
+
+  final List<Map<String, dynamic>> workersWithDetails = [];
+
+  for (final profile in profilesData) {
+    final workerId = profile['id'] as String;
+
+    final workerProfile = await supabase
+        .from('worker_profiles')
+        .select('bio')
+        .eq('user_id', workerId)
+        .maybeSingle();
+
+    if (workerProfile == null) {
+      continue;
+    }
+
+    final services = await supabase
+        .from('worker_services')
+        .select('services(name)')
+        .eq('worker_id', workerId)
+        .eq('service_type', 'primary');
+
+    String profession = 'Trabajador';
+    if (services.isNotEmpty) {
+      final serviceName = services.first['services']?['name'];
+      if (serviceName != null) {
+        profession = serviceName as String;
+      }
+    }
+
+    final precargadosData = await supabase
+        .from('worker_tasks')
+        .select('tasks(name)')
+        .eq('worker_id', workerId);
+
+    final precargados = precargadosData
+        .map((t) => t['tasks']?['name'] as String?)
+        .where((name) => name != null)
+        .cast<String>()
+        .toList();
+
+    final personalizadosData = await supabase
+        .from('custom_services')
+        .select('name')
+        .eq('worker_id', workerId);
+
+    final personalizados = personalizadosData
+        .map((s) => s['name'] as String?)
+        .where((name) => name != null)
+        .cast<String>()
+        .toList();
+
+    final allSkills = [...precargados, ...personalizados];
+
+    final workerName = '${profile['first_name'] ?? ''} ${profile['last_name'] ?? ''}'.trim().toLowerCase();
+    final professionLower = profession.toLowerCase();
+    final skillsLower = allSkills.map((s) => s.toLowerCase()).toList();
+
+    final queryLower = query.toLowerCase().trim();
+    final matchesName = workerName.contains(queryLower);
+    final matchesProfession = professionLower.contains(queryLower);
+    final matchesSkills = skillsLower.any((skill) => skill.contains(queryLower));
+
+    if (query.isEmpty || matchesName || matchesProfession || matchesSkills) {
+      final reviews = await supabase
+          .from('reviews')
+          .select('rating')
+          .eq('worker_id', workerId);
+
+      double rating = 0;
+      if (reviews.isNotEmpty) {
+        final total = reviews.fold<int>(0, (sum, r) => sum + ((r['rating'] as num?)?.toInt() ?? 0));
+        rating = total / reviews.length;
+      }
+
+      workersWithDetails.add({
+        'id': workerId,
+        'name': '${profile['first_name'] ?? ''} ${profile['last_name'] ?? ''}'.trim(),
+        'avatarUrl': profile['avatar_url'],
+        'bio': workerProfile?['bio'] ?? '',
+        'profession': profession,
+        'rating': rating,
+        'reviewCount': reviews.length,
+        'precargados': precargados,
+        'personalizados': personalizados,
+      });
+    }
+  }
+
+  return workersWithDetails;
+});
+
+class SearchWorkersPage extends ConsumerStatefulWidget {
+  const SearchWorkersPage({super.key});
+
+  @override
+  ConsumerState<SearchWorkersPage> createState() => _SearchWorkersPageState();
+}
+
+class _SearchWorkersPageState extends ConsumerState<SearchWorkersPage> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final query = ref.watch(searchQueryProvider);
+    final workersAsync = ref.watch(searchWorkersProvider(query));
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? const Color(0xFF121212) : Colors.grey[50];
+    final cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subtitleColor = isDark ? Colors.grey[400]! : Colors.grey[600]!;
+
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        backgroundColor: AppTheme.clientPrimary,
+        foregroundColor: Colors.white,
+        title: const Text(
+          'Buscar trabajadores',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        elevation: 0,
+      ),
+      body: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: AppTheme.clientPrimary,
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) {
+                ref.read(searchQueryProvider.notifier).state = value;
+              },
+              style: const TextStyle(color: Colors.black87),
+              decoration: InputDecoration(
+                hintText: 'Buscar por nombre, profesión o habilidades...',
+                hintStyle: TextStyle(color: Colors.grey[600]),
+                prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.grey),
+                        onPressed: () {
+                          _searchController.clear();
+                          ref.read(searchQueryProvider.notifier).state = '';
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(25),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              ),
+            ),
+          ),
+          Expanded(
+            child: workersAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, size: 60, color: subtitleColor),
+                    const SizedBox(height: 16),
+                    Text('Error: $error', style: TextStyle(color: subtitleColor)),
+                  ],
+                ),
+              ),
+              data: (workers) {
+                if (workers.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.search_off, size: 80, color: subtitleColor),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No se encontraron trabajadores',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: subtitleColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: workers.length,
+                  itemBuilder: (context, index) {
+                    final worker = workers[index];
+                    final precargados = worker['precargados'] as List<String>? ?? [];
+                    final personalizados = worker['personalizados'] as List<String>? ?? [];
+                    final allJobs = [...precargados, ...personalizados];
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(16),
+                                ),
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  height: 160,
+                                  child: worker['avatarUrl'] != null
+                                      ? Image.network(
+                                          worker['avatarUrl'] as String,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stack) =>
+                                              Container(
+                                                color: Colors.grey[300],
+                                                child: Icon(
+                                                  Icons.person,
+                                                  size: 60,
+                                                  color: Colors.grey[500],
+                                                ),
+                                              ),
+                                        )
+                                      : Container(
+                                          color: Colors.grey[300],
+                                          child: Icon(
+                                            Icons.person,
+                                            size: 60,
+                                            color: Colors.grey[500],
+                                          ),
+                                        ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 12,
+                                right: 12,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.6),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.star,
+                                        color: Color(0xFFFFB800),
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        (worker['rating'] as double).toStringAsFixed(1),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.bottomCenter,
+                                      end: Alignment.topCenter,
+                                      colors: [
+                                        Colors.black.withValues(alpha: 0.7),
+                                        Colors.transparent,
+                                      ],
+                                    ),
+                                  ),
+                                  padding: const EdgeInsets.fromLTRB(12, 30, 12, 12),
+                                  child: Text(
+                                    worker['name'] as String,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.star,
+                                      color: Color(0xFFFFB800),
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${(worker['rating'] as double).toStringAsFixed(1)} (${worker['reviewCount']} reseñas)',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: textColor,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.clientPrimary,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    worker['profession'] as String,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                if (allJobs.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Habilidades',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: subtitleColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: allJobs.map((job) {
+                                      final isPrecargado = precargados.contains(job);
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 5,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isPrecargado
+                                              ? AppTheme.clientPrimary.withValues(alpha: 0.15)
+                                              : Colors.amber.withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          job,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: isPrecargado
+                                                ? AppTheme.clientPrimary
+                                                : Colors.amber[800],
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ],
+                                const SizedBox(height: 16),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: () async {
+                                      final canView = await checkAndShowProfileCompletion(
+                                        context: context,
+                                        ref: ref,
+                                      );
+                                      if (canView) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => WorkerProfileViewPage(
+                                              workerId: worker['id'] as String,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppTheme.clientPrimary,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      elevation: 0,
+                                    ),
+                                    child: const Text(
+                                      'Ver perfil',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

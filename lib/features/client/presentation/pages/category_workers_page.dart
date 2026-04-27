@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jobsy/core/theme/app_theme.dart';
+import 'package:jobsy/features/client/domain/profile_check_helper.dart';
 import 'package:jobsy/features/client/presentation/client_home/client_home_controller.dart';
+import 'package:jobsy/features/client/presentation/pages/worker_profile_view_page.dart';
 
 class CategoryWorkersPage extends ConsumerWidget {
   final String categoryName;
@@ -301,7 +303,22 @@ class CategoryWorkersPage extends ConsumerWidget {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                onPressed: () {},
+                                onPressed: () async {
+                                  final canView = await checkAndShowProfileCompletion(
+                                    context: context,
+                                    ref: ref,
+                                  );
+                                  if (canView) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => WorkerProfileViewPage(
+                                          workerId: worker.id,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.clientPrimary,
                                   foregroundColor: Colors.white,

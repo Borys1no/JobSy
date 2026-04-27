@@ -17,7 +17,7 @@ final popularServicesProvider =
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
           : _$popularServicesHash,
-      dependencies: [supabaseProvider],
+      dependencies: null,
       allTransitiveDependencies: null,
     );
 
@@ -35,7 +35,7 @@ final allServicesProvider =
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
           : _$allServicesHash,
-      dependencies: [supabaseProvider],
+      dependencies: null,
       allTransitiveDependencies: null,
     );
 
@@ -52,7 +52,7 @@ final tasksListProvider = AutoDisposeFutureProvider<List<TaskModel>>.internal(
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
       : _$tasksListHash,
-  dependencies: [supabaseProvider],
+  dependencies: null,
   allTransitiveDependencies: null,
 );
 

@@ -4,7 +4,7 @@ create table notifications (
   type text not null,
   title text not null,
   body text,
-  from_user_id uuid references auth.users(id),
+  from_user_id uuid references profiles(id),
   is_read boolean default false,
   created_at timestamp with time zone default now()
 );

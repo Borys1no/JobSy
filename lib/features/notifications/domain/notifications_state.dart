@@ -2,7 +2,10 @@ class NotificationsState {
   final bool isLoading;
   final List<NotificationItem> notifications;
 
-  NotificationsState({required this.isLoading, required this.notifications});
+  NotificationsState({
+    required this.isLoading,
+    required this.notifications,
+  });
 
   factory NotificationsState.initial() =>
       NotificationsState(isLoading: true, notifications: const []);
@@ -27,6 +30,7 @@ class NotificationItem {
   final String? fromUserAvatar;
   final bool isRead;
   final DateTime createdAt;
+  final String? chatId;
 
   NotificationItem({
     required this.id,
@@ -37,5 +41,6 @@ class NotificationItem {
     this.fromUserAvatar,
     required this.isRead,
     required this.createdAt,
+    this.chatId,
   });
 }

@@ -8,6 +8,10 @@ import 'package:jobsy/features/client/presentation/pages/category_workers_page.d
 import 'package:jobsy/features/client/presentation/pages/featured_workers_page.dart';
 import 'package:jobsy/features/client/presentation/pages/task_workers_page.dart';
 import 'package:jobsy/features/notifications/presentation/notifications_page.dart';
+import 'package:jobsy/features/notifications/presentation/notifications_controller.dart';
+import 'package:jobsy/features/client/presentation/chat/chats_page.dart';
+import 'package:jobsy/features/client/presentation/chat/chat_controller.dart';
+import 'package:jobsy/features/client/presentation/pages/client_profile_page.dart';
 
 class ClientHomePage extends ConsumerStatefulWidget {
   const ClientHomePage({super.key});
@@ -94,40 +98,66 @@ class _ClientHomePageState extends ConsumerState<ClientHomePage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
-            'JobSy',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          IconButton(
-            onPressed: () {
+          GestureDetector(
+            onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const NotificationsPage(),
+                  builder: (context) => const ClientProfilePage(),
                 ),
               );
             },
-            icon: Stack(
+            child: Row(
               children: [
-                const Icon(Icons.notifications_outlined, color: Colors.white),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
+                Consumer(
+                  builder: (context, ref, _) {
+                    final profileAsync = ref.watch(clientProfileProvider);
+                    
+                    return CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.white,
+                      backgroundImage: profileAsync.valueOrNull?['avatar_url'] != null
+                          ? NetworkImage(profileAsync.valueOrNull!['avatar_url'] as String)
+                          : null,
+                      child: profileAsync.valueOrNull?['avatar_url'] == null
+                          ? const Icon(Icons.person, color: AppTheme.clientPrimary)
+                          : null,
+                    );
+                  },
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'JobSy',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
               ],
             ),
+          ),
+          Consumer(
+            builder: (context, ref, child) {
+              final notifications = ref.watch(notificationsControllerProvider).notifications;
+              final unreadCount = notifications.where((n) => !n.isRead).length;
+              
+              return Badge(
+                label: Text('$unreadCount'),
+                isLabelVisible: unreadCount > 0,
+                child: IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationsPage(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -684,19 +714,58 @@ class _ClientHomePageState extends ConsumerState<ClientHomePage> {
                 AppTheme.clientPrimary,
                 subColor,
               ),
-              _buildNavItem(
-                Icons.chat_bubble_outline,
-                'Chat',
-                false,
-                () {},
-                AppTheme.clientPrimary,
-                subColor,
+              Consumer(
+                builder: (context, ref, _) {
+                  final hasUnread = ref.watch(chatControllerProvider.select(
+                    (s) => s.conversations.any((c) => c.hasUnreadMessages),
+                  ));
+
+                  return Stack(
+                    children: [
+                      _buildNavItem(
+                        Icons.chat_bubble_outline,
+                        'Chat',
+                        false,
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ChatsPage(),
+                            ),
+                          );
+                        },
+                        AppTheme.clientPrimary,
+                        subColor,
+                      ),
+                      if (hasUnread)
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
               ),
               _buildNavItem(
                 Icons.person_outline,
                 'Perfil',
                 false,
-                () {},
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ClientProfilePage(),
+                    ),
+                  );
+                },
                 AppTheme.clientPrimary,
                 subColor,
               ),

@@ -3,12 +3,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jobsy/core/theme/app_theme.dart';
 import 'package:jobsy/features/notifications/domain/notifications_state.dart';
 import 'package:jobsy/features/notifications/presentation/notifications_controller.dart';
+import 'package:jobsy/features/client/presentation/chat/chats_page.dart';
 
-class NotificationsPage extends ConsumerWidget {
+class NotificationsPage extends ConsumerStatefulWidget {
   const NotificationsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NotificationsPage> createState() => _NotificationsPageState();
+}
+
+class _NotificationsPageState extends ConsumerState<NotificationsPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Recargar notificaciones cuando se abre la página
+    Future.microtask(() {
+      ref.read(notificationsControllerProvider.notifier).loadNotifications();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(notificationsControllerProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF5F7FA);
@@ -92,7 +107,7 @@ class NotificationsPage extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
           Text(
-            'No tienes notificaciones',
+            'Por ahora no tiene notificaciones',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -101,7 +116,7 @@ class NotificationsPage extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Aquí aparecerán tus notificaciones',
+            'Aquí aparecerán sus notificaciones cuando las reciba',
             style: TextStyle(
               fontSize: 14,
               color: subColor.withValues(alpha: 0.7),
@@ -140,6 +155,12 @@ class NotificationsPage extends ConsumerWidget {
                   .read(notificationsControllerProvider.notifier)
                   .markAsRead(notification.id);
             }
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ChatsPage(),
+              ),
+            );
           },
         );
       },
@@ -256,7 +277,10 @@ class _NotificationCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           notification.body!,
-                          style: TextStyle(color: subColor, fontSize: 13),
+                          style: TextStyle(
+                            color: subColor,
+                            fontSize: 13,
+                          ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
