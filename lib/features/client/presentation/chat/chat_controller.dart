@@ -1,5 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:jobsy/core/config/supabase_client.dart';
 import 'package:jobsy/features/auth/auth_providers.dart';
 import 'package:jobsy/features/client/domain/chat_state.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -45,7 +43,9 @@ class ChatController extends _$ChatController {
 
         if (profileData == null) continue;
 
-        final name = '${profileData['first_name'] ?? ''} ${profileData['last_name'] ?? ''}'.trim();
+        final name =
+            '${profileData['first_name'] ?? ''} ${profileData['last_name'] ?? ''}'
+                .trim();
         final avatar = profileData['avatar_url'] as String?;
 
         final messagesData = await _supabase
@@ -59,7 +59,9 @@ class ChatController extends _$ChatController {
         DateTime? lastMessageAt;
         if (messagesData.isNotEmpty) {
           lastMessage = messagesData.first['content'] as String?;
-          lastMessageAt = DateTime.tryParse(messagesData.first['created_at'] as String? ?? '');
+          lastMessageAt = DateTime.tryParse(
+            messagesData.first['created_at'] as String? ?? '',
+          );
         }
 
         final unreadCount = await _supabase
@@ -78,18 +80,20 @@ class ChatController extends _$ChatController {
             .then((value) => value.isNotEmpty);
 
         if (isClient) {
-          conversations.add(ChatConversation(
-            id: chat['id'] as String,
-            chatId: chat['id'] as String,
-            clientId: userId,
-            workerId: otherId,
-            clientName: 'Tú',
-            workerName: name,
-            workerAvatar: avatar,
-            lastMessage: lastMessage,
-            lastMessageAt: lastMessageAt,
-            hasUnreadMessages: hasUnread,
-          ));
+          conversations.add(
+            ChatConversation(
+              id: chat['id'] as String,
+              chatId: chat['id'] as String,
+              clientId: userId,
+              workerId: otherId,
+              clientName: 'Tú',
+              workerName: name,
+              workerAvatar: avatar,
+              lastMessage: lastMessage,
+              lastMessageAt: lastMessageAt,
+              hasUnreadMessages: hasUnread,
+            ),
+          );
         } else {
           final clientData = await _supabase
               .from('profiles')
@@ -97,25 +101,26 @@ class ChatController extends _$ChatController {
               .eq('id', chat['client_id'])
               .maybeSingle();
 
-          conversations.add(ChatConversation(
-            id: chat['id'] as String,
-            chatId: chat['id'] as String,
-            clientId: chat['client_id'] as String,
-            workerId: userId,
-            clientName: '${clientData?['first_name'] ?? ''} ${clientData?['last_name'] ?? ''}'.trim(),
-            workerName: name,
-            clientAvatar: clientData?['avatar_url'] as String?,
-            lastMessage: lastMessage,
-            lastMessageAt: lastMessageAt,
-            hasUnreadMessages: hasUnread,
-          ));
+          conversations.add(
+            ChatConversation(
+              id: chat['id'] as String,
+              chatId: chat['id'] as String,
+              clientId: chat['client_id'] as String,
+              workerId: userId,
+              clientName:
+                  '${clientData?['first_name'] ?? ''} ${clientData?['last_name'] ?? ''}'
+                      .trim(),
+              workerName: name,
+              clientAvatar: clientData?['avatar_url'] as String?,
+              lastMessage: lastMessage,
+              lastMessageAt: lastMessageAt,
+              hasUnreadMessages: hasUnread,
+            ),
+          );
         }
       }
 
-      state = state.copyWith(
-        isLoading: false,
-        conversations: conversations,
-      );
+      state = state.copyWith(isLoading: false, conversations: conversations);
     } catch (e) {
       print('Error loading chats: $e');
       state = state.copyWith(isLoading: false);
@@ -130,17 +135,20 @@ class ChatController extends _$ChatController {
       final existingChat = await _supabase
           .from('chats')
           .select('id')
-          .or('and(client_id.eq.$userId,worker_id.eq.$workerId),and(client_id.eq.$workerId,worker_id.eq.$userId)')
+          .or(
+            'and(client_id.eq.$userId,worker_id.eq.$workerId),and(client_id.eq.$workerId,worker_id.eq.$userId)',
+          )
           .maybeSingle();
 
       if (existingChat != null) {
         return existingChat['id'] as String;
       }
 
-      final newChat = await _supabase.from('chats').insert({
-        'client_id': userId,
-        'worker_id': workerId,
-      }).select().single();
+      final newChat = await _supabase
+          .from('chats')
+          .insert({'client_id': userId, 'worker_id': workerId})
+          .select()
+          .single();
 
       return newChat['id'] as String;
     } catch (e) {
@@ -171,7 +179,7 @@ class ChatMessagesController extends _$ChatMessagesController {
           .select()
           .eq('id', chatId)
           .single();
-      
+
       print('Chat data found: $chatData');
 
       final userId = _supabase.auth.currentUser?.id;
@@ -179,7 +187,7 @@ class ChatMessagesController extends _$ChatMessagesController {
         print('User is null!');
         return;
       }
-      
+
       print('Current user: $userId');
 
       final isClient = chatData['client_id'] == userId;
@@ -193,8 +201,9 @@ class ChatMessagesController extends _$ChatMessagesController {
           .eq('id', otherId)
           .maybeSingle();
 
-      final workerName = profileData != null 
-          ? '${profileData['first_name'] ?? ''} ${profileData['last_name'] ?? ''}'.trim()
+      final workerName = profileData != null
+          ? '${profileData['first_name'] ?? ''} ${profileData['last_name'] ?? ''}'
+                .trim()
           : 'Usuario';
       final workerAvatar = profileData?['avatar_url'] as String?;
 
@@ -203,31 +212,37 @@ class ChatMessagesController extends _$ChatMessagesController {
           .select()
           .eq('chat_id', chatId)
           .order('created_at', ascending: true);
-      
+
       print('Messages found: ${messagesData.length}');
       print('Messages: $messagesData');
 
-        final messages = messagesData.map((m) => ChatMessage(
-          id: m['id'] as String,
-          chatId: m['chat_id'] as String,
-          senderId: m['sender_id'] as String,
-          content: m['content'] as String? ?? '',
-          createdAt: DateTime.tryParse(m['created_at'] as String? ?? '') ?? DateTime.now(),
-        )).toList();
+      final messages = messagesData
+          .map(
+            (m) => ChatMessage(
+              id: m['id'] as String,
+              chatId: m['chat_id'] as String,
+              senderId: m['sender_id'] as String,
+              content: m['content'] as String? ?? '',
+              createdAt:
+                  DateTime.tryParse(m['created_at'] as String? ?? '') ??
+                  DateTime.now(),
+            ),
+          )
+          .toList();
 
-        await _supabase
-            .from('messages')
-            .update({'is_read': true})
-            .eq('chat_id', chatId)
-            .neq('sender_id', userId);
+      await _supabase
+          .from('messages')
+          .update({'is_read': true})
+          .eq('chat_id', chatId)
+          .neq('sender_id', userId);
 
-        state = state.copyWith(
-          isLoading: false,
-          workerId: otherId,
-          workerName: workerName,
-          workerAvatar: workerAvatar,
-          messages: messages,
-        );
+      state = state.copyWith(
+        isLoading: false,
+        workerId: otherId,
+        workerName: workerName,
+        workerAvatar: workerAvatar,
+        messages: messages,
+      );
     } catch (e) {
       print('Error loading messages: $e');
       state = state.copyWith(isLoading: false);
@@ -239,11 +254,11 @@ class ChatMessagesController extends _$ChatMessagesController {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
 
-      final newMessage = await _supabase.from('messages').insert({
-        'chat_id': chatId,
-        'sender_id': userId,
-        'content': content,
-      }).select().single();
+      final newMessage = await _supabase
+          .from('messages')
+          .insert({'chat_id': chatId, 'sender_id': userId, 'content': content})
+          .select()
+          .single();
 
       final message = ChatMessage(
         id: newMessage['id'] as String,
@@ -253,9 +268,7 @@ class ChatMessagesController extends _$ChatMessagesController {
         createdAt: DateTime.now(),
       );
 
-      state = state.copyWith(
-        messages: [...state.messages, message],
-      );
+      state = state.copyWith(messages: [...state.messages, message]);
 
       final chatData = await _supabase
           .from('chats')
@@ -263,8 +276,8 @@ class ChatMessagesController extends _$ChatMessagesController {
           .eq('id', chatId)
           .single();
 
-      final recipientId = chatData['client_id'] == userId 
-          ? chatData['worker_id'] 
+      final recipientId = chatData['client_id'] == userId
+          ? chatData['worker_id']
           : chatData['client_id'];
 
       final profileData = await _supabase
@@ -279,7 +292,9 @@ class ChatMessagesController extends _$ChatMessagesController {
         'user_id': recipientId,
         'type': 'message',
         'title': 'Nuevo mensaje de $senderName',
-        'body': content.length > 50 ? '${content.substring(0, 50)}...' : content,
+        'body': content.length > 50
+            ? '${content.substring(0, 50)}...'
+            : content,
         'from_user_id': userId,
         'chat_id': chatId,
         'is_read': false,

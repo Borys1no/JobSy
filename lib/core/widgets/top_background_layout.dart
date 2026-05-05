@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:jobsy/core/constants/app_constants.dart';
 
 class TopBackgroundLayout extends StatelessWidget {
   final Widget child;

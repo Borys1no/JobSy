@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:jobsy/features/auth/auth_providers.dart';
 import 'package:jobsy/features/worker/domain/reviews_state.dart';

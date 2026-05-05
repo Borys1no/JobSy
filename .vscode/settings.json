@@ -2,5 +2,6 @@
     "java.project.sourcePaths": [
         "lib/features/auth/presentation",
         "lib/core"
-    ]
+    ],
+    "java.configuration.updateBuildConfiguration": "interactive"
 }

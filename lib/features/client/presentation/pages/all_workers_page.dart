@@ -90,7 +90,7 @@ final allWorkersProvider = FutureProvider<List<Map<String, dynamic>>>((
       'name': '${profile['first_name'] ?? ''} ${profile['last_name'] ?? ''}'
           .trim(),
       'avatarUrl': profile['avatar_url'],
-      'bio': workerProfile?['bio'] ?? '',
+      'bio': workerProfile['bio'] ?? '',
       'profession': profession,
       'rating': rating,
       'reviewCount': reviews.length,
@@ -371,17 +371,19 @@ class AllWorkersPage extends ConsumerWidget {
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: () async {
-                                final canView = await checkAndShowProfileCompletion(
-                                  context: context,
-                                  ref: ref,
-                                );
+                                final canView =
+                                    await checkAndShowProfileCompletion(
+                                      context: context,
+                                      ref: ref,
+                                    );
                                 if (canView) {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => WorkerProfileViewPage(
-                                        workerId: worker['id'] as String,
-                                      ),
+                                      builder: (context) =>
+                                          WorkerProfileViewPage(
+                                            workerId: worker['id'] as String,
+                                          ),
                                     ),
                                   );
                                 }

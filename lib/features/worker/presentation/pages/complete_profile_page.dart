@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:jobsy/core/theme/app_theme.dart';
-import 'package:jobsy/core/widgets/blob_image.dart';
 import 'package:jobsy/features/worker/presentation/pages/step1_form.dart';
 
 class CompleteProfilePage extends StatelessWidget {

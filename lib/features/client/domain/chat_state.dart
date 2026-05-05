@@ -1,18 +1,11 @@
-import 'package:jobsy/features/worker/domain/review.dart';
-
 class ChatListState {
   final bool isLoading;
   final List<ChatConversation> conversations;
 
-  ChatListState({
-    required this.isLoading,
-    required this.conversations,
-  });
+  ChatListState({required this.isLoading, required this.conversations});
 
-  factory ChatListState.initial() => ChatListState(
-        isLoading: true,
-        conversations: [],
-      );
+  factory ChatListState.initial() =>
+      ChatListState(isLoading: true, conversations: []);
 
   ChatListState copyWith({
     bool? isLoading,
@@ -71,12 +64,12 @@ class ChatMessagesState {
   });
 
   factory ChatMessagesState.initial(String chatId) => ChatMessagesState(
-        isLoading: true,
-        chatId: chatId,
-        workerId: '',
-        workerName: '',
-        messages: [],
-      );
+    isLoading: true,
+    chatId: chatId,
+    workerId: '',
+    workerName: '',
+    messages: [],
+  );
 
   ChatMessagesState copyWith({
     bool? isLoading,

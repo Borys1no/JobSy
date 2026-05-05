@@ -163,7 +163,7 @@ class RoleSelectionPage extends ConsumerWidget {
                       onChanged: (value) {
                         ref.read(themeProvider.notifier).state = value;
                       },
-                      activeColor: AppTheme.primary,
+                      activeThumbColor: AppTheme.primary,
                     ),
                   ],
                 ),

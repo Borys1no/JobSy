@@ -1,5 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:jobsy/core/config/supabase_client.dart';
 import 'package:jobsy/features/auth/auth_providers.dart';
 import 'package:jobsy/features/client/domain/chat_state.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -44,7 +42,9 @@ class WorkerChatController extends _$WorkerChatController {
 
         if (profileData == null) continue;
 
-        final name = '${profileData['first_name'] ?? ''} ${profileData['last_name'] ?? ''}'.trim();
+        final name =
+            '${profileData['first_name'] ?? ''} ${profileData['last_name'] ?? ''}'
+                .trim();
         final avatar = profileData['avatar_url'] as String?;
 
         final messagesData = await _supabase
@@ -58,7 +58,9 @@ class WorkerChatController extends _$WorkerChatController {
         DateTime? lastMessageAt;
         if (messagesData.isNotEmpty) {
           lastMessage = messagesData.first['content'] as String?;
-          lastMessageAt = DateTime.tryParse(messagesData.first['created_at'] as String? ?? '');
+          lastMessageAt = DateTime.tryParse(
+            messagesData.first['created_at'] as String? ?? '',
+          );
         }
 
         final unreadCount = await _supabase
@@ -77,18 +79,20 @@ class WorkerChatController extends _$WorkerChatController {
             .then((value) => value.isNotEmpty);
 
         if (isWorker) {
-          conversations.add(ChatConversation(
-            id: chat['id'] as String,
-            chatId: chat['id'] as String,
-            clientId: chat['client_id'] as String,
-            workerId: userId,
-            clientName: name,
-            workerName: 'Tú',
-            clientAvatar: avatar,
-            lastMessage: lastMessage,
-            lastMessageAt: lastMessageAt,
-            hasUnreadMessages: hasUnread,
-          ));
+          conversations.add(
+            ChatConversation(
+              id: chat['id'] as String,
+              chatId: chat['id'] as String,
+              clientId: chat['client_id'] as String,
+              workerId: userId,
+              clientName: name,
+              workerName: 'Tú',
+              clientAvatar: avatar,
+              lastMessage: lastMessage,
+              lastMessageAt: lastMessageAt,
+              hasUnreadMessages: hasUnread,
+            ),
+          );
         } else {
           final workerData = await _supabase
               .from('profiles')
@@ -96,25 +100,24 @@ class WorkerChatController extends _$WorkerChatController {
               .eq('id', chat['worker_id'])
               .maybeSingle();
 
-          conversations.add(ChatConversation(
-            id: chat['id'] as String,
-            chatId: chat['id'] as String,
-            clientId: userId,
-            workerId: chat['worker_id'] as String,
-            clientName: 'Tú',
-            workerName: name,
-            workerAvatar: avatar,
-            lastMessage: lastMessage,
-            lastMessageAt: lastMessageAt,
-            hasUnreadMessages: hasUnread,
-          ));
+          conversations.add(
+            ChatConversation(
+              id: chat['id'] as String,
+              chatId: chat['id'] as String,
+              clientId: userId,
+              workerId: chat['worker_id'] as String,
+              clientName: 'Tú',
+              workerName: name,
+              workerAvatar: avatar,
+              lastMessage: lastMessage,
+              lastMessageAt: lastMessageAt,
+              hasUnreadMessages: hasUnread,
+            ),
+          );
         }
       }
 
-      state = state.copyWith(
-        isLoading: false,
-        conversations: conversations,
-      );
+      state = state.copyWith(isLoading: false, conversations: conversations);
     } catch (e) {
       print('Error loading worker chats: $e');
       state = state.copyWith(isLoading: false);

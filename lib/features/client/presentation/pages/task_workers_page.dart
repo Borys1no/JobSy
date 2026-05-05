@@ -4,7 +4,6 @@ import 'package:jobsy/core/theme/app_theme.dart';
 import 'package:jobsy/features/auth/auth_providers.dart';
 import 'package:jobsy/features/client/domain/profile_check_helper.dart';
 import 'package:jobsy/features/client/presentation/pages/worker_profile_view_page.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 final taskWorkersProvider =
     FutureProvider.family<List<Map<String, dynamic>>, String>((
@@ -332,17 +331,19 @@ class TaskWorkersPage extends ConsumerWidget {
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: () async {
-                                final canView = await checkAndShowProfileCompletion(
-                                  context: context,
-                                  ref: ref,
-                                );
+                                final canView =
+                                    await checkAndShowProfileCompletion(
+                                      context: context,
+                                      ref: ref,
+                                    );
                                 if (canView) {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => WorkerProfileViewPage(
-                                        workerId: worker['id'] as String,
-                                      ),
+                                      builder: (context) =>
+                                          WorkerProfileViewPage(
+                                            workerId: worker['id'] as String,
+                                          ),
                                     ),
                                   );
                                 }

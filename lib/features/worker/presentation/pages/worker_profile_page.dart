@@ -766,8 +766,9 @@ class WorkerProfilePage extends ConsumerWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              if (textController.text.trim().isNotEmpty)
+              if (textController.text.trim().isNotEmpty) {
                 controller.addLanguage(textController.text.trim());
+              }
               Navigator.pop(context);
             },
             child: const Text('Agregar'),
@@ -802,8 +803,9 @@ class WorkerProfilePage extends ConsumerWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              if (textController.text.trim().isNotEmpty)
+              if (textController.text.trim().isNotEmpty) {
                 controller.addCertification(textController.text.trim());
+              }
               Navigator.pop(context);
             },
             child: const Text('Agregar'),

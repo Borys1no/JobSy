@@ -5,7 +5,6 @@ import 'package:jobsy/features/auth/auth_providers.dart';
 import 'package:jobsy/features/client/domain/chat_state.dart';
 import 'package:jobsy/features/client/presentation/chat/chat_controller.dart';
 import 'package:jobsy/features/worker/presentation/chat/worker_chat_controller.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ChatPage extends ConsumerStatefulWidget {
   final String chatId;
@@ -53,7 +52,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                   : null,
               child: state.workerAvatar == null
                   ? Text(
-                      state.workerName.isNotEmpty ? state.workerName[0].toUpperCase() : '?',
+                      state.workerName.isNotEmpty
+                          ? state.workerName[0].toUpperCase()
+                          : '?',
                       style: TextStyle(
                         color: AppTheme.clientPrimary,
                         fontWeight: FontWeight.bold,
@@ -65,10 +66,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             Expanded(
               child: Text(
                 state.workerName,
-                style: TextStyle(
-                  color: textColor,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -102,11 +100,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                           },
                         ),
                 ),
-                _buildMessageInput(
-                  cardColor,
-                  textColor,
-                  subtitleColor,
-                ),
+                _buildMessageInput(cardColor, textColor, subtitleColor),
               ],
             ),
     );
@@ -207,11 +201,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                   color: AppTheme.clientPrimary,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.send,
-                  color: Colors.white,
-                  size: 20,
-                ),
+                child: const Icon(Icons.send, color: Colors.white, size: 20),
               ),
             ),
           ],

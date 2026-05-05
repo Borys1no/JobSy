@@ -1,7 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../auth/auth_providers.dart';
 import '../../domain/service_model.dart';
-import 'package:riverpod/riverpod.dart';
 import '../../domain/task_model.dart';
 
 part 'services_provider.g.dart';

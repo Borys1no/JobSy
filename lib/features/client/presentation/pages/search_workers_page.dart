@@ -7,108 +7,125 @@ import 'package:jobsy/features/client/presentation/pages/worker_profile_view_pag
 
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
-final searchWorkersProvider = FutureProvider.family<List<Map<String, dynamic>>, String>((ref, String query) async {
-  final supabase = ref.read(supabaseProvider);
+final searchWorkersProvider =
+    FutureProvider.family<List<Map<String, dynamic>>, String>((
+      ref,
+      String query,
+    ) async {
+      final supabase = ref.read(supabaseProvider);
 
-  final profilesData = await supabase
-      .from('profiles')
-      .select('id, first_name, last_name, avatar_url')
-      .eq('role', 'worker');
+      final profilesData = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, avatar_url')
+          .eq('role', 'worker');
 
-  if (profilesData.isEmpty) {
-    return [];
-  }
-
-  final List<Map<String, dynamic>> workersWithDetails = [];
-
-  for (final profile in profilesData) {
-    final workerId = profile['id'] as String;
-
-    final workerProfile = await supabase
-        .from('worker_profiles')
-        .select('bio')
-        .eq('user_id', workerId)
-        .maybeSingle();
-
-    if (workerProfile == null) {
-      continue;
-    }
-
-    final services = await supabase
-        .from('worker_services')
-        .select('services(name)')
-        .eq('worker_id', workerId)
-        .eq('service_type', 'primary');
-
-    String profession = 'Trabajador';
-    if (services.isNotEmpty) {
-      final serviceName = services.first['services']?['name'];
-      if (serviceName != null) {
-        profession = serviceName as String;
-      }
-    }
-
-    final precargadosData = await supabase
-        .from('worker_tasks')
-        .select('tasks(name)')
-        .eq('worker_id', workerId);
-
-    final precargados = precargadosData
-        .map((t) => t['tasks']?['name'] as String?)
-        .where((name) => name != null)
-        .cast<String>()
-        .toList();
-
-    final personalizadosData = await supabase
-        .from('custom_services')
-        .select('name')
-        .eq('worker_id', workerId);
-
-    final personalizados = personalizadosData
-        .map((s) => s['name'] as String?)
-        .where((name) => name != null)
-        .cast<String>()
-        .toList();
-
-    final allSkills = [...precargados, ...personalizados];
-
-    final workerName = '${profile['first_name'] ?? ''} ${profile['last_name'] ?? ''}'.trim().toLowerCase();
-    final professionLower = profession.toLowerCase();
-    final skillsLower = allSkills.map((s) => s.toLowerCase()).toList();
-
-    final queryLower = query.toLowerCase().trim();
-    final matchesName = workerName.contains(queryLower);
-    final matchesProfession = professionLower.contains(queryLower);
-    final matchesSkills = skillsLower.any((skill) => skill.contains(queryLower));
-
-    if (query.isEmpty || matchesName || matchesProfession || matchesSkills) {
-      final reviews = await supabase
-          .from('reviews')
-          .select('rating')
-          .eq('worker_id', workerId);
-
-      double rating = 0;
-      if (reviews.isNotEmpty) {
-        final total = reviews.fold<int>(0, (sum, r) => sum + ((r['rating'] as num?)?.toInt() ?? 0));
-        rating = total / reviews.length;
+      if (profilesData.isEmpty) {
+        return [];
       }
 
-      workersWithDetails.add({
-        'id': workerId,
-        'name': '${profile['first_name'] ?? ''} ${profile['last_name'] ?? ''}'.trim(),
-        'avatarUrl': profile['avatar_url'],
-        'bio': workerProfile?['bio'] ?? '',
-        'profession': profession,
-        'rating': rating,
-        'reviewCount': reviews.length,
-        'precargados': precargados,
-        'personalizados': personalizados,
-      });
-    }
-  }
+      final List<Map<String, dynamic>> workersWithDetails = [];
 
-  return workersWithDetails;
-});
+      for (final profile in profilesData) {
+        final workerId = profile['id'] as String;
+
+        final workerProfile = await supabase
+            .from('worker_profiles')
+            .select('bio')
+            .eq('user_id', workerId)
+            .maybeSingle();
+
+        if (workerProfile == null) {
+          continue;
+        }
+
+        final services = await supabase
+            .from('worker_services')
+            .select('services(name)')
+            .eq('worker_id', workerId)
+            .eq('service_type', 'primary');
+
+        String profession = 'Trabajador';
+        if (services.isNotEmpty) {
+          final serviceName = services.first['services']?['name'];
+          if (serviceName != null) {
+            profession = serviceName as String;
+          }
+        }
+
+        final precargadosData = await supabase
+            .from('worker_tasks')
+            .select('tasks(name)')
+            .eq('worker_id', workerId);
+
+        final precargados = precargadosData
+            .map((t) => t['tasks']?['name'] as String?)
+            .where((name) => name != null)
+            .cast<String>()
+            .toList();
+
+        final personalizadosData = await supabase
+            .from('custom_services')
+            .select('name')
+            .eq('worker_id', workerId);
+
+        final personalizados = personalizadosData
+            .map((s) => s['name'] as String?)
+            .where((name) => name != null)
+            .cast<String>()
+            .toList();
+
+        final allSkills = [...precargados, ...personalizados];
+
+        final workerName =
+            '${profile['first_name'] ?? ''} ${profile['last_name'] ?? ''}'
+                .trim()
+                .toLowerCase();
+        final professionLower = profession.toLowerCase();
+        final skillsLower = allSkills.map((s) => s.toLowerCase()).toList();
+
+        final queryLower = query.toLowerCase().trim();
+        final matchesName = workerName.contains(queryLower);
+        final matchesProfession = professionLower.contains(queryLower);
+        final matchesSkills = skillsLower.any(
+          (skill) => skill.contains(queryLower),
+        );
+
+        if (query.isEmpty ||
+            matchesName ||
+            matchesProfession ||
+            matchesSkills) {
+          final reviews = await supabase
+              .from('reviews')
+              .select('rating')
+              .eq('worker_id', workerId);
+
+          double rating = 0;
+          if (reviews.isNotEmpty) {
+            final total = reviews.fold<int>(
+              0,
+              (sum, r) => sum + ((r['rating'] as num?)?.toInt() ?? 0),
+            );
+            rating = total / reviews.length;
+          }
+
+          workersWithDetails.add({
+            'id': workerId,
+            'name':
+                '${profile['first_name'] ?? ''} ${profile['last_name'] ?? ''}'
+                    .trim(),
+            'avatarUrl': profile['avatar_url'],
+            'bio': workerProfile['bio'] ?? '',
+            'profession': profession,
+            'rating': rating,
+            'reviewCount': reviews.length,
+            'precargados': precargados,
+            'personalizados': personalizados,
+          });
+        }
+      }
+
+      return workersWithDetails;
+    });
 
 class SearchWorkersPage extends ConsumerStatefulWidget {
   const SearchWorkersPage({super.key});
@@ -178,7 +195,10 @@ class _SearchWorkersPageState extends ConsumerState<SearchWorkersPage> {
                   borderRadius: BorderRadius.circular(25),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
               ),
             ),
           ),
@@ -191,7 +211,10 @@ class _SearchWorkersPageState extends ConsumerState<SearchWorkersPage> {
                   children: [
                     Icon(Icons.error_outline, size: 60, color: subtitleColor),
                     const SizedBox(height: 16),
-                    Text('Error: $error', style: TextStyle(color: subtitleColor)),
+                    Text(
+                      'Error: $error',
+                      style: TextStyle(color: subtitleColor),
+                    ),
                   ],
                 ),
               ),
@@ -221,8 +244,10 @@ class _SearchWorkersPageState extends ConsumerState<SearchWorkersPage> {
                   itemCount: workers.length,
                   itemBuilder: (context, index) {
                     final worker = workers[index];
-                    final precargados = worker['precargados'] as List<String>? ?? [];
-                    final personalizados = worker['personalizados'] as List<String>? ?? [];
+                    final precargados =
+                        worker['precargados'] as List<String>? ?? [];
+                    final personalizados =
+                        worker['personalizados'] as List<String>? ?? [];
                     final allJobs = [...precargados, ...personalizados];
 
                     return Container(
@@ -254,15 +279,16 @@ class _SearchWorkersPageState extends ConsumerState<SearchWorkersPage> {
                                       ? Image.network(
                                           worker['avatarUrl'] as String,
                                           fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stack) =>
-                                              Container(
-                                                color: Colors.grey[300],
-                                                child: Icon(
-                                                  Icons.person,
-                                                  size: 60,
-                                                  color: Colors.grey[500],
-                                                ),
-                                              ),
+                                          errorBuilder:
+                                              (context, error, stack) =>
+                                                  Container(
+                                                    color: Colors.grey[300],
+                                                    child: Icon(
+                                                      Icons.person,
+                                                      size: 60,
+                                                      color: Colors.grey[500],
+                                                    ),
+                                                  ),
                                         )
                                       : Container(
                                           color: Colors.grey[300],
@@ -296,7 +322,8 @@ class _SearchWorkersPageState extends ConsumerState<SearchWorkersPage> {
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        (worker['rating'] as double).toStringAsFixed(1),
+                                        (worker['rating'] as double)
+                                            .toStringAsFixed(1),
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontWeight: FontWeight.bold,
@@ -322,7 +349,12 @@ class _SearchWorkersPageState extends ConsumerState<SearchWorkersPage> {
                                       ],
                                     ),
                                   ),
-                                  padding: const EdgeInsets.fromLTRB(12, 30, 12, 12),
+                                  padding: const EdgeInsets.fromLTRB(
+                                    12,
+                                    30,
+                                    12,
+                                    12,
+                                  ),
                                   child: Text(
                                     worker['name'] as String,
                                     style: const TextStyle(
@@ -392,7 +424,9 @@ class _SearchWorkersPageState extends ConsumerState<SearchWorkersPage> {
                                     spacing: 8,
                                     runSpacing: 8,
                                     children: allJobs.map((job) {
-                                      final isPrecargado = precargados.contains(job);
+                                      final isPrecargado = precargados.contains(
+                                        job,
+                                      );
                                       return Container(
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 10,
@@ -400,9 +434,14 @@ class _SearchWorkersPageState extends ConsumerState<SearchWorkersPage> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: isPrecargado
-                                              ? AppTheme.clientPrimary.withValues(alpha: 0.15)
-                                              : Colors.amber.withValues(alpha: 0.15),
-                                          borderRadius: BorderRadius.circular(8),
+                                              ? AppTheme.clientPrimary
+                                                    .withValues(alpha: 0.15)
+                                              : Colors.amber.withValues(
+                                                  alpha: 0.15,
+                                                ),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                         child: Text(
                                           job,
@@ -423,17 +462,20 @@ class _SearchWorkersPageState extends ConsumerState<SearchWorkersPage> {
                                   width: double.infinity,
                                   child: ElevatedButton(
                                     onPressed: () async {
-                                      final canView = await checkAndShowProfileCompletion(
-                                        context: context,
-                                        ref: ref,
-                                      );
+                                      final canView =
+                                          await checkAndShowProfileCompletion(
+                                            context: context,
+                                            ref: ref,
+                                          );
                                       if (canView) {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => WorkerProfileViewPage(
-                                              workerId: worker['id'] as String,
-                                            ),
+                                            builder: (context) =>
+                                                WorkerProfileViewPage(
+                                                  workerId:
+                                                      worker['id'] as String,
+                                                ),
                                           ),
                                         );
                                       }
@@ -441,7 +483,9 @@ class _SearchWorkersPageState extends ConsumerState<SearchWorkersPage> {
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppTheme.clientPrimary,
                                       foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10),
                                       ),

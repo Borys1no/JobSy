@@ -1,5 +1,4 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:jobsy/core/config/supabase_client.dart';
 import 'package:jobsy/features/auth/auth_providers.dart';
 import 'package:jobsy/features/client/domain/worker_profile_state.dart';
 import 'package:jobsy/features/worker/domain/review.dart';
@@ -97,7 +96,7 @@ class WorkerProfileController extends _$WorkerProfileController {
           .map((url) => WorkPhoto(url: url as String))
           .toList();
 
-final reviewsData = await _supabase
+      final reviewsData = await _supabase
           .from('reviews')
           .select('id, rating, comment, created_at, client_id')
           .eq('worker_id', workerId)
@@ -111,26 +110,27 @@ final reviewsData = await _supabase
             .eq('id', r['client_id'])
             .maybeSingle();
 
-        reviews.add(Review(
-          id: r['id'] as String,
-          clientName:
-              '${clientData?['first_name'] ?? ''} ${clientData?['last_name'] ?? ''}'
-                  .trim(),
-          clientAvatar: clientData?['avatar_url'] as String?,
-          rating: (r['rating'] as num?)?.toDouble() ?? 0,
-          comment: r['comment'] as String? ?? '',
-          date: DateTime.tryParse(r['created_at'] as String? ?? '') ?? DateTime.now(),
-          service: 'Servicio',
-        ));
+        reviews.add(
+          Review(
+            id: r['id'] as String,
+            clientName:
+                '${clientData?['first_name'] ?? ''} ${clientData?['last_name'] ?? ''}'
+                    .trim(),
+            clientAvatar: clientData?['avatar_url'] as String?,
+            rating: (r['rating'] as num?)?.toDouble() ?? 0,
+            comment: r['comment'] as String? ?? '',
+            date:
+                DateTime.tryParse(r['created_at'] as String? ?? '') ??
+                DateTime.now(),
+            service: 'Servicio',
+          ),
+        );
       }
 
       final reviewCount = reviews.length;
       double rating = 0;
       if (reviewCount > 0) {
-        final totalRating = reviews.fold<double>(
-          0,
-          (sum, r) => sum + r.rating,
-        );
+        final totalRating = reviews.fold<double>(0, (sum, r) => sum + r.rating);
         rating = totalRating / reviewCount;
       }
 

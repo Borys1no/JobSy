@@ -104,8 +104,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     ),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty)
+                    if (value == null || value.isEmpty) {
                       return 'Ingresa tu correo electrónico';
+                    }
                     if (!value.contains('@')) return 'Ingresa un correo válido';
                     return null;
                   },
@@ -147,10 +148,12 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     ),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty)
+                    if (value == null || value.isEmpty) {
                       return 'Ingresa una contraseña';
-                    if (value.length < 6)
+                    }
+                    if (value.length < 6) {
                       return 'La contraseña debe tener al menos 6 caracteres';
+                    }
                     return null;
                   },
                 ),
@@ -193,10 +196,12 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     ),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty)
+                    if (value == null || value.isEmpty) {
                       return 'Confirma tu contraseña';
-                    if (value != _passCtrl.text)
+                    }
+                    if (value != _passCtrl.text) {
                       return 'Las contraseñas no coinciden';
+                    }
                     return null;
                   },
                 ),

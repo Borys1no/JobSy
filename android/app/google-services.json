@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "255930022505",
+    "project_id": "jobsymessaging",
+    "storage_bucket": "jobsymessaging.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:255930022505:android:a6194618986d0c36aa00f8",
+        "android_client_info": {
+          "package_name": "com.altonet.jobsy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIfTbp-VmP5t4Y3yqzRMcA0mJOYgQXo_8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:255930022505:android:099f37af594e2462aa00f8",
+        "android_client_info": {
+          "package_name": "com.example.jobsy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIfTbp-VmP5t4Y3yqzRMcA0mJOYgQXo_8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -99,8 +99,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty)
+                    if (value == null || value.isEmpty) {
                       return 'Ingresa tu correo electrónico';
+                    }
                     if (!value.contains('@')) return 'Ingresa un correo válido';
                     return null;
                   },
@@ -143,10 +144,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty)
+                    if (value == null || value.isEmpty) {
                       return 'Ingresa tu contraseña';
-                    if (value.length < 6)
+                    }
+                    if (value.length < 6) {
                       return 'La contraseña debe tener al menos 6 caracteres';
+                    }
                     return null;
                   },
                 ),
